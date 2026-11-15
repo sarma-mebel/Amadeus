@@ -1,0 +1,54 @@
+openai_api_key: null
+gemini_api_key: null
+huggingface_api_token: null
+llm_model: gemini-3-flash-preview
+persona:
+  speaking_rate: 1.0
+  pitch_shift: 0.0
+  tsundere_level: 0.6
+  scientific_formality: 0.7
+  safe_mode: false
+audio:
+  enable_voice: true
+  input_device: null
+  output_device: null
+  sample_rate: 16000
+  vad_aggressiveness: 2
+  push_to_talk_key: space
+providers:
+  llm: gemini
+  stt: faster_whisper
+  tts: huggingface_inference
+  embedding: sentence_transformers
+  huggingface_tts_path: mio/amadeus
+  huggingface_tts_kwargs: {}
+  huggingface_inference_model: your-username/your-tts-space  # your own Hugging Face Space
+  huggingface_inference_voice: null
+  melotts_config_path: models/kurisu_voice/config.json
+  melotts_checkpoint_path: models/kurisu_voice/D_120000.pth
+  melotts_language: JP
+  melotts_device: cpu
+memory:
+  max_context_messages: 12
+  summary_trigger_messages: 8
+  summary_model: gemini-flash-lite-latest
+  summary_max_chars: 500
+  persist_path: null
+  enable_long_term: false
+  embeddings_path: null
+  vector_path: null
+  vector_backend: json
+  dedupe_threshold: 0.96
+logging:
+  level: INFO
+  logfile: null
+transcript_path: null
+kurisu_isms_path: assets/kurisu_isms.txt
+web:
+  # Public demo hardening: settings/persona mutations locked (403), and the
+  # chat/tts/stt endpoints capped per client IP so one visitor can't drain
+  # the shared Gemini key. Sessions evict aggressively — anonymous visitors
+  # don't come back for yesterday's context.
+  demo_mode: true
+  rate_limit_per_minute: 8
+  session_ttl_hours: 1.0

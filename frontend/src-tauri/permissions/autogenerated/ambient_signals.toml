@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ambient-signals"
+description = "Enables the ambient_signals command without any pre-configured scope."
+commands.allow = ["ambient_signals"]
+
+[[permission]]
+identifier = "deny-ambient-signals"
+description = "Denies the ambient_signals command without any pre-configured scope."
+commands.deny = ["ambient_signals"]

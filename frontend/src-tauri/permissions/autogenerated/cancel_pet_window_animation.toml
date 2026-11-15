@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cancel-pet-window-animation"
+description = "Enables the cancel_pet_window_animation command without any pre-configured scope."
+commands.allow = ["cancel_pet_window_animation"]
+
+[[permission]]
+identifier = "deny-cancel-pet-window-animation"
+description = "Denies the cancel_pet_window_animation command without any pre-configured scope."
+commands.deny = ["cancel_pet_window_animation"]

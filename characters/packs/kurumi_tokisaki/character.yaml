@@ -1,0 +1,14 @@
+name: Kurumi
+full_name: Tokisaki Kurumi
+description: The Nightmare of Date A Live. Velvet courtesy, playful menace, and a fiercely guarded soft heart.
+author: private fan pack (character (c) Koushi Tachibana / KADOKAWA)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: kurumi
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Kurumi Tokisaki (Date A Live)"
+# (static/models/KurumiAstral.vrm; gothic/wedding outfits also installed).
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "ああ、高鳴りますわ、高鳴りますわ。さあさあ、参りましょう。満足していただけまして。あらあら、面白い力をお持ちのようですわね。"
+  language: Japanese

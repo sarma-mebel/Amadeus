@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Amadeus Kurisu (GPU)",
+  "identifier": "com.amadeus.kurisu.gpu",
+  "bundle": {
+    "resources": {
+      "../dist": "frontend/dist",
+      "../../static": "static",
+      "../../assets": "assets",
+      "../../models/kurisu_voice_onnx": "models/kurisu_voice_onnx",
+      "../../models/kurisu_voice_qwen": "models/kurisu_voice_qwen",
+      "../../dist-desktop/packs-staged": "characters/packs"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/zxKyouma/Amadeus/releases/latest/download/latest-gpu.json"
+      ]
+    }
+  }
+}

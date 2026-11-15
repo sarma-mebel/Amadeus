@@ -1,0 +1,807 @@
+/* "Her memories" slide-over: right-hand drawer over a dimmed backdrop,
+   same dark/amber HUD language as the settings modal. */
+
+.memory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(5, 8, 15, 0.62);
+  backdrop-filter: blur(5px);
+  animation: memory-fade-in var(--dur-slow) var(--ease-out);
+}
+
+@keyframes memory-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.memory-panel {
+  width: min(420px, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    165deg,
+    rgba(14, 19, 33, 0.97) 0%,
+    rgba(18, 24, 40, 0.98) 55%,
+    rgba(11, 16, 28, 0.97) 100%
+  );
+  border-left: 1px solid var(--surface-alpha-12);
+  box-shadow: -24px 0 60px rgba(4, 6, 12, 0.55);
+  animation: memory-slide-in var(--dur-slow) var(--ease-out);
+}
+
+@keyframes memory-slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-overlay,
+  .memory-panel {
+    animation: none;
+  }
+}
+
+.memory-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 22px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  position: relative;
+}
+
+.memory-panel-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 14% 0%, rgba(var(--amber-rgb), 0.16), transparent 55%);
+  pointer-events: none;
+}
+
+.memory-panel-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.memory-panel-subtitle {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.memory-close {
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.memory-close:hover {
+  background: rgba(var(--auburn-rgb), 0.24);
+  transform: translateY(-1px);
+}
+
+.memory-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.memory-note {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.memory-section h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--amber-200);
+}
+
+.memory-profile-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-profile-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+}
+
+.memory-profile-row dt {
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(var(--amber-rgb), 0.85);
+}
+
+.memory-profile-row dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.memory-profile-value {
+  flex: 1;
+}
+
+.memory-fact-list,
+.memory-episode-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-fact-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+}
+
+.memory-fact-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.memory-forget-button {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(243, 244, 246, 0.45);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.memory-forget-button:hover,
+.memory-forget-button:focus-visible {
+  background: rgba(var(--error-rgb), 0.18);
+  border-color: rgba(var(--error-rgb), 0.5);
+  color: rgba(255, 235, 234, 0.95);
+}
+
+.memory-pin-button,
+.memory-edit-button {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(243, 244, 246, 0.45);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.memory-pin-button:hover,
+.memory-pin-button:focus-visible,
+.memory-edit-button:hover,
+.memory-edit-button:focus-visible {
+  background: rgba(var(--amber-rgb), 0.16);
+  border-color: rgba(var(--amber-rgb), 0.4);
+  color: rgba(255, 235, 234, 0.95);
+}
+
+.memory-pin-button[aria-pressed='true'] {
+  color: var(--amber-200);
+  border-color: rgba(var(--amber-rgb), 0.45);
+  background: rgba(var(--amber-rgb), 0.1);
+}
+
+.memory-fact-list li.pinned {
+  border-color: rgba(var(--amber-rgb), 0.35);
+  background: rgba(var(--amber-rgb), 0.06);
+}
+
+/* Shared by MemoryPanel's inline fact editor and SynapseMap's synapse-edit-
+   form (SynapseDetail) — same inline "swap the row for an input" editor,
+   just wrapping different markup. */
+.memory-fact-edit-row,
+.synapse-edit-form {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  align-items: center;
+}
+
+.memory-fact-edit-row input,
+.synapse-edit-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-alpha-12);
+  background: rgba(18, 26, 43, 0.9);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.memory-fact-edit-row button,
+.synapse-edit-form button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.memory-fact-edit-row button.cancel {
+  background: var(--surface-alpha-06);
+  color: var(--text-muted);
+  border: 1px solid var(--surface-alpha-12);
+}
+
+.memory-fact-protected {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: rgba(255, 138, 128, 0.9);
+}
+
+.memory-episode-list li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(243, 244, 246, 0.86);
+}
+
+.memory-remember-row {
+  display: flex;
+  gap: 8px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--border-soft);
+  background: rgba(9, 13, 22, 0.8);
+}
+
+.memory-remember-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-alpha-12);
+  background: rgba(18, 26, 43, 0.9);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.memory-remember-row input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.memory-remember-row button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.memory-remember-row button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.memory-remember-row button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---- Synapse map view ---- */
+.memory-view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.memory-view-toggle button {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.memory-view-toggle button.active {
+  background: rgba(var(--auburn-rgb, 193, 68, 79), 0.25);
+  color: #fff;
+}
+
+.synapse-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.synapse-canvas {
+  width: 100%;
+  height: 340px;
+  border: 1px solid var(--surface-alpha-08, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(var(--auburn-rgb, 193, 68, 79), 0.06), transparent 70%),
+    var(--navy-950, rgb(6, 10, 20));
+}
+
+.synapse-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.synapse-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.synapse-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.synapse-detail {
+  margin: 0;
+  min-height: 2.6em;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.synapse-detail-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.synapse-detail-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* .synapse-edit-form's base layout/input/button rules are shared with
+   MemoryPanel's .memory-fact-edit-row (see that rule) — these are just the
+   synapse-map-specific size overrides (smaller font, wraps, min-width). */
+.synapse-edit-form {
+  flex-wrap: wrap;
+}
+
+.synapse-edit-form input {
+  min-width: 120px;
+  font-size: 12px;
+}
+
+.synapse-edit-form button {
+  font-size: 11px;
+}
+
+.synapse-action-button {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  background: var(--surface-alpha-06, rgba(255, 255, 255, 0.06));
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.synapse-action-button:hover {
+  background: rgba(var(--amber-rgb), 0.16);
+}
+
+.synapse-action-button[aria-pressed='true'] {
+  color: var(--amber-200);
+  border-color: rgba(var(--amber-rgb), 0.45);
+}
+
+.synapse-action-danger:hover {
+  background: rgba(var(--error-rgb), 0.18);
+  border-color: rgba(var(--error-rgb), 0.5);
+}
+
+/* ---- Relationship arc ---- */
+.memory-relationship {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.memory-trust-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.memory-trust-value {
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--amber-200);
+}
+
+.memory-trust-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-alpha-08);
+  border: 1px solid var(--surface-alpha-12);
+  overflow: hidden;
+}
+
+.memory-trust-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(var(--amber-rgb), 0.55), var(--amber-400));
+  transition: width var(--dur-fast) var(--ease-out);
+}
+
+.memory-tone-badge {
+  align-self: flex-start;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+  color: var(--text-muted);
+}
+
+.memory-tone-badge-low {
+  color: rgba(147, 181, 255, 0.9);
+  border-color: rgba(147, 181, 255, 0.35);
+  background: rgba(147, 181, 255, 0.1);
+}
+
+.memory-tone-badge-positive {
+  color: var(--amber-200);
+  border-color: rgba(var(--amber-rgb), 0.35);
+  background: rgba(var(--amber-rgb), 0.1);
+}
+
+.memory-bipolar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.memory-bipolar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.memory-bipolar-track {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-alpha-08);
+  border: 1px solid var(--surface-alpha-12);
+  overflow: hidden;
+}
+
+.memory-bipolar-center {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  width: 1px;
+  background: var(--surface-alpha-14);
+  transform: translateX(-0.5px);
+}
+
+.memory-bipolar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+}
+
+.memory-bipolar-fill.positive {
+  background: linear-gradient(90deg, rgba(var(--amber-rgb), 0.35), var(--amber-400));
+}
+
+.memory-bipolar-fill.negative {
+  background: linear-gradient(270deg, rgba(var(--auburn-rgb), 0.4), var(--auburn-400));
+}
+
+.memory-reset-arc {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-alpha-12);
+  background: var(--surface-alpha-06);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.memory-reset-arc:hover:not(:disabled),
+.memory-reset-arc:focus-visible {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: var(--surface-alpha-12);
+}
+
+.memory-reset-arc.armed {
+  color: rgba(255, 138, 128, 0.95);
+  border-color: rgba(255, 138, 128, 0.5);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.memory-reset-arc:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---- Her diary ---- */
+.memory-diary-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-alpha-12);
+  border-left: 3px solid rgba(var(--amber-rgb), 0.55);
+  background: linear-gradient(
+    165deg,
+    rgba(var(--amber-rgb), 0.09) 0%,
+    rgba(var(--amber-rgb), 0.04) 100%
+  );
+}
+
+.memory-diary-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.memory-diary-date {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber-200);
+}
+
+.memory-diary-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  font-style: italic;
+  color: rgba(243, 244, 246, 0.92);
+  white-space: pre-wrap;
+}
+
+.memory-diary-footer {
+  margin: 10px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Backups section: export keeps a copy the user owns; import replaces the
+   live memory (confirm-armed, server backs up the old files first). */
+.memory-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.memory-backup-button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-alpha-12);
+  background: rgba(18, 26, 43, 0.9);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.memory-backup-button:hover:not(:disabled) {
+  border-color: var(--accent-border);
+}
+
+.memory-backup-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The zero-facts and empty-synapse-map EmptyState blocks render directly in
+   the flex-column panel body / map section, not inside a bordered card —
+   give them breathing room so they don't sit flush against the header. */
+.memory-panel-body > .empty-state-block,
+.memory-section > .empty-state-block {
+  padding: 28px 12px;
+}
+
+.memory-backup-button.armed {
+  border-color: rgba(255, 99, 71, 0.6);
+  background: rgba(255, 69, 40, 0.14);
+  color: #ffd9d1;
+}
+
+/* --- Standing insights (InsightsSection.tsx) ------------------------------
+   Her nightly behavioral model of the user, shown because it shapes every
+   reply and was previously invisible. Deliberately understated: this is a
+   record to read, not a dashboard to admire. */
+.memory-insights-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.memory-insights-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.memory-insights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-insights-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: rgba(18, 26, 43, 0.55);
+}
+
+.memory-insight-kind {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+.memory-insight-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.memory-insight-dismiss {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.memory-insight-dismiss:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.memory-insight-dismiss:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.memory-last-felt {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}

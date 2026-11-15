@@ -1,0 +1,43 @@
+{
+  "//": "Example animation manifest — copy to static/animations/manifest.json to use it. See docs/animations.md for the full format and sourcing instructions.",
+
+  "idle": [
+    { "file": "idle_animation01.vrma", "directory": "idle", "name": "Idle 01", "role": "idle" },
+    { "file": "idle_animation03.vrma", "directory": "idle", "name": "Standing Idle", "role": "idle" },
+    {
+      "file": "mixamo/breathing_idle.fbx",
+      "name": "Breathing Idle",
+      "role": "idle",
+      "tags": ["mixamo", "subtle"]
+    },
+    {
+      "file": "mixamo/standing_idle_variation_01.fbx",
+      "name": "Standing Idle Variation",
+      "role": "idle",
+      "tags": ["mixamo"]
+    }
+  ],
+
+  "action": [
+    { "file": "VRMA_02.vrma", "directory": "action", "name": "Greeting", "role": "gesture" },
+    { "file": "VRMA_08.vrma", "directory": "action", "name": "Look Around", "role": "gesture" },
+    {
+      "file": "mixamo/thinking.fbx",
+      "name": "Thinking",
+      "role": "gesture",
+      "tags": ["mixamo", "subtle"]
+    },
+    {
+      "file": "mixamo/head_nod.fbx",
+      "name": "Head Nod",
+      "role": "gesture",
+      "tags": ["mixamo", "subtle"]
+    },
+    {
+      "file": "mixamo/talking.fbx",
+      "name": "Talking",
+      "role": "talk",
+      "tags": ["mixamo"]
+    }
+  ]
+}

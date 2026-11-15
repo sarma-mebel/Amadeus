@@ -1,0 +1,675 @@
+/**
+ * Amadeus connection sequence (title/loading screen).
+ * Styled after the SG0 Amadeus terminal reference (Loading_page_sample):
+ * near-black void, dominant Kurisu-auburn HUD, cyan secondary accents.
+ * Uses theme.css tokens wherever a matching one exists.
+ */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-boot);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(var(--auburn-rgb), 0.05), transparent 55%),
+    #050505;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: default;
+  user-select: none;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.loading-screen.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Faint CRT scanlines over everything. */
+.loading-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(255, 255, 255, 0.012) 3px,
+    rgba(255, 255, 255, 0.012) 4px
+  );
+}
+
+/* ---- Center column ---- */
+.loading-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: min(92vw, 640px);
+  text-align: center;
+  /* Bias the centered stack upward so its tail (progress + auto-connect)
+     clears the absolutely-positioned footer strip. */
+  padding-bottom: clamp(2.2rem, 7vh, 4.5rem);
+}
+
+/* Halo wrap: an auburn glow bleeds out behind the portrait so the art
+   sits IN the scene instead of on it. */
+.loading-portrait-halo {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  /* Pull the wordmark up over the portrait's faded lower edge (the
+     reference art overlaps the title onto her coat). */
+  margin-bottom: clamp(-4.6rem, -6vh, -2.6rem);
+  pointer-events: none;
+}
+
+.loading-portrait-halo::before {
+  content: '';
+  position: absolute;
+  inset: -12% -20%;
+  background: radial-gradient(
+    ellipse 55% 48% at 50% 42%,
+    rgba(var(--auburn-rgb), 0.16),
+    rgba(159, 216, 232, 0.05) 55%,
+    transparent 75%
+  );
+  filter: blur(2px);
+}
+
+.loading-portrait {
+  position: relative;
+  display: block;
+  width: min(44vh, 380px);
+  height: auto;
+  /* Aggressive feather: the bitmap's rectangular edge must never read. */
+  -webkit-mask-image: radial-gradient(
+    ellipse 62% 56% at 50% 40%,
+    black 34%,
+    rgba(0, 0, 0, 0.55) 58%,
+    transparent 80%
+  );
+  mask-image: radial-gradient(
+    ellipse 62% 56% at 50% 40%,
+    black 34%,
+    rgba(0, 0, 0, 0.55) 58%,
+    transparent 80%
+  );
+}
+
+/* ---- HUD set dressing (crops from the reference art) ---- */
+.loading-deco {
+  position: absolute;
+  opacity: 0.55;
+  pointer-events: none;
+  /* Feather each crop's rectangular edge into the void. */
+  -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, black 45%, transparent 92%);
+  mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, black 45%, transparent 92%);
+}
+
+.loading-deco-hexes {
+  /* Lower-left, faint: balances the diagnostics column now that the
+     stability gauge lives inside it (they used to collide over here). */
+  left: clamp(1rem, 6vw, 7rem);
+  bottom: 20%;
+  width: clamp(90px, 9vw, 150px);
+  opacity: 0.32;
+}
+
+/* ---- Top status bar ---- */
+.loading-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: clamp(0.7rem, 2.4vh, 1.4rem) clamp(0.9rem, 3vw, 2rem);
+  font-family: var(--font-mono, monospace);
+  z-index: 1;
+}
+
+.loading-topbar-lab {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.loading-lab-glyph {
+  width: 22px;
+  height: 22px;
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+}
+
+.loading-topbar-lab-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.loading-topbar-lab-title {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.loading-topbar-lab-sub {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.loading-topbar-net {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.loading-topbar-net-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.loading-topbar-net-line {
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  color: rgba(159, 216, 232, 0.85);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.loading-topbar-net-line.muted {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.loading-net-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--auburn-300);
+  box-shadow: 0 0 6px rgba(var(--auburn-rgb), 0.8);
+  animation: loading-net-blink 2.2s ease-in-out infinite;
+}
+
+@keyframes loading-net-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.loading-wifi-icon,
+.loading-signal-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(159, 216, 232, 0.85);
+  flex-shrink: 0;
+}
+
+/* ---- Left info panel ---- */
+.loading-info-panel {
+  position: absolute;
+  left: clamp(0.9rem, 3vw, 2rem);
+  top: clamp(4.4rem, 13vh, 6.6rem);
+  min-width: 200px;
+  max-width: 240px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.loading-info-header {
+  color: var(--auburn-300);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+  font-size: 0.68rem;
+}
+
+.loading-info-bracket {
+  color: rgba(var(--auburn-rgb), 0.7);
+}
+
+.loading-info-caret {
+  float: right;
+  opacity: 0.7;
+}
+
+.loading-info-row {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.loading-info-arrow {
+  color: rgba(var(--auburn-rgb), 0.75);
+  margin-right: 0.15rem;
+}
+
+/* ---- Physics readout (inside the dossier panel) ---- */
+.loading-info-equations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0.6;
+}
+
+.loading-equation {
+  font-family: 'Cambria Math', Cambria, 'Times New Roman', serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 244, 226, 0.75);
+}
+
+/* ---- Core stability gauge (footer of the diagnostic log panel) ---- */
+.loading-stability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loading-stability-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.loading-stability-ring {
+  width: 52px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.loading-stability-arc {
+  transition: stroke-dasharray 0.4s ease;
+  filter: drop-shadow(0 0 6px rgba(var(--auburn-rgb), 0.5));
+}
+
+.loading-stability-value {
+  font-family: var(--font-mono, monospace);
+  font-size: 22px;
+  fill: var(--auburn-300);
+}
+
+/* ---- Omega seal (pure vector — no bitmap-crop edges) ---- */
+.loading-medallion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.9rem;
+  pointer-events: none;
+}
+
+.loading-medallion-ring {
+  width: clamp(52px, 7vh, 72px);
+  height: auto;
+  filter: drop-shadow(0 0 12px rgba(var(--auburn-rgb), 0.35));
+  animation: loading-medallion-spin 60s linear infinite;
+}
+
+/* Only the dashed outer ring should feel like it drifts; keep the Ω
+   upright by counter-rotating the glyph. */
+.loading-medallion-omega {
+  font-family: 'Cambria Math', Cambria, 'Times New Roman', serif;
+  font-size: 40px;
+  fill: var(--auburn-300);
+  transform-origin: 50px 50px;
+  animation: loading-medallion-spin 60s linear infinite reverse;
+}
+
+@keyframes loading-medallion-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-medallion-caption {
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 244, 226, 0.45);
+}
+
+.loading-wordmark {
+  margin: 0;
+  position: relative; /* keep above the portrait's faded lower edge */
+  font-size: clamp(2.6rem, 8vw, 4.4rem);
+  font-weight: 200;
+  letter-spacing: 0.22em;
+  /* Optically recenter: trailing letter-spacing pads the right edge. */
+  margin-left: 0.22em;
+  color: #ffe9e4;
+  text-shadow:
+    0 0 18px rgba(var(--auburn-rgb), 0.55),
+    0 0 60px rgba(var(--auburn-rgb), 0.25);
+}
+
+.loading-subtitle {
+  font-size: 0.82rem;
+  letter-spacing: 0.52em;
+  margin-left: 0.52em;
+  color: #9fd8e8;
+  opacity: 0.85;
+}
+
+.loading-tagline {
+  margin-top: 0.55rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.28em;
+  margin-left: 0.28em;
+  color: rgba(255, 244, 226, 0.85);
+}
+
+.loading-tagline-en {
+  font-size: 0.68rem;
+  font-family: var(--font-mono, monospace);
+  color: rgba(var(--auburn-rgb), 0.7);
+}
+
+/* ---- Status line flanked by waveforms ---- */
+.loading-statusline-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.4rem;
+}
+
+.loading-waveform {
+  opacity: 0.7;
+}
+
+.loading-waveform.mirrored {
+  transform: scaleX(-1);
+}
+
+.loading-statusline {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.3em;
+  margin-left: 0.3em;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.loading-statusline.ready {
+  border-color: rgba(var(--auburn-rgb), 0.65);
+  color: var(--auburn-300);
+  animation: loading-pulse 1.6s ease-in-out infinite;
+  cursor: pointer;
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(var(--auburn-rgb), 0);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(var(--auburn-rgb), 0.35);
+  }
+}
+
+/* ---- Progress ---- */
+.nixie-meter {
+  margin-top: 1.15rem;
+}
+
+.loading-bar {
+  width: min(74vw, 520px);
+  height: 14px;
+  margin-top: 0.45rem;
+  border: 1px solid rgba(var(--auburn-rgb), 0.45);
+  border-radius: 8px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.loading-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--auburn-500), var(--auburn-300));
+  box-shadow: 0 0 14px rgba(var(--auburn-rgb), 0.55);
+  transition: width 0.15s linear;
+}
+
+.loading-autoconnect {
+  margin-top: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.loading-autoconnect input {
+  accent-color: var(--auburn-400);
+}
+
+/* ---- Diagnostic log (top right) ---- */
+.loading-diagnostics {
+  position: absolute;
+  top: clamp(4.4rem, 13vh, 6.6rem);
+  right: clamp(0.8rem, 3vw, 2.2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+  min-width: 200px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.loading-diagnostics-title {
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.25rem;
+}
+
+.loading-diagnostics-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.4rem;
+  color: rgba(255, 255, 255, 0.5);
+  animation: loading-row-in 0.35s ease both;
+}
+
+@keyframes loading-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.loading-diag-state.ok {
+  color: #8fd9a8;
+}
+
+.loading-diag-state.pending {
+  color: var(--auburn-300);
+}
+
+.loading-diag-state.error {
+  color: var(--error-400);
+}
+
+/* ---- Footer ---- */
+.loading-footer {
+  position: absolute;
+  bottom: clamp(0.7rem, 2.5vh, 1.6rem);
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 0.5rem;
+  padding: 0 clamp(1rem, 3vw, 2.4rem);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.loading-footer-cell {
+  white-space: nowrap;
+}
+
+.loading-footer-left {
+  text-align: left;
+}
+
+.loading-footer-center {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.loading-footer-right {
+  text-align: right;
+}
+
+/* ---- Short windows: shrink the tall center stack so the progress bar
+   and auto-connect never fall below the fold. ---- */
+@media (max-height: 900px) {
+  .loading-portrait {
+    width: min(38vh, 320px);
+  }
+
+  .loading-statusline-wrap {
+    margin-top: 1rem;
+  }
+
+  .loading-medallion {
+    margin-top: 0.55rem;
+  }
+
+  .loading-medallion-ring {
+    width: clamp(44px, 6vh, 60px);
+  }
+
+  .nixie-meter {
+    margin-top: 0.7rem;
+  }
+
+  .loading-autoconnect {
+    margin-top: 0.7rem;
+  }
+}
+
+@media (max-height: 760px) {
+  .loading-portrait {
+    width: min(32vh, 250px);
+  }
+
+  .loading-wordmark {
+    font-size: clamp(2.1rem, 6.5vw, 3.2rem);
+  }
+
+  .loading-medallion {
+    display: none;
+  }
+
+  .loading-tagline {
+    margin-top: 0.3rem;
+  }
+}
+
+/* ---- Small screens: tuck the diagnostics under the center column ---- */
+@media (max-width: 700px), (max-height: 640px) {
+  .loading-diagnostics {
+    display: none;
+  }
+
+  .loading-deco {
+    display: none;
+  }
+
+  .loading-info-panel {
+    display: none;
+  }
+
+  .loading-topbar {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .loading-topbar-lab-title {
+    font-size: 0.6rem;
+  }
+
+  .loading-topbar-lab-sub,
+  .loading-topbar-net-line {
+    font-size: 0.56rem;
+  }
+
+  .loading-portrait {
+    width: min(34vh, 240px);
+  }
+
+  .loading-footer {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 0.15rem;
+    bottom: 0.5rem;
+  }
+
+  .loading-footer-cell {
+    white-space: normal;
+  }
+
+  .loading-footer-left,
+  .loading-footer-right {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-statusline.ready {
+    animation: none;
+  }
+
+  .loading-diagnostics-row {
+    animation: none;
+  }
+
+  .loading-net-dot {
+    animation: none;
+  }
+}

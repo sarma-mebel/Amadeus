@@ -1,0 +1,1278 @@
+{
+  "idle": [
+    {
+      "file": "idle_animation03.vrma",
+      "directory": "idle",
+      "name": "Standing Idle",
+      "role": "idle",
+      "note": "re-enabled 2026-07-20 (was demoted 2026-07-17 as stiff)"
+    },
+    {
+      "file": "idle-maid.vrma",
+      "directory": "sourced",
+      "name": "Calm Idle",
+      "role": "idle",
+      "tags": [
+        "sourced"
+      ],
+      "disabled": true,
+      "note": "demoted 2026-07-17: loop gazes at the sky, wrong for a face-to-face conversation"
+    },
+    {
+      "file": "UAL_Idle_Loop.vrma",
+      "directory": "sourced",
+      "name": "Relaxed Idle",
+      "role": "idle",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "UAL2_Idle_FoldArms_Loop.vrma",
+      "directory": "ual",
+      "name": "Arms Crossed Idle",
+      "role": "idle",
+      "tags": [
+        "sourced",
+        "ual2"
+      ],
+      "note": "re-enabled 2026-07-20 (audit 2026-07-19 had flagged jacket clipping)"
+    }
+  ],
+  "action": [
+    {
+      "file": "idle_animation01.vrma",
+      "directory": "idle",
+      "name": "Idle 01",
+      "role": "gesture",
+      "tags": [
+        "manual"
+      ]
+    },
+    {
+      "file": "idle_animation02.vrma",
+      "directory": "idle",
+      "name": "Idle 02",
+      "role": "subtle",
+      "tags": [
+        "manual"
+      ],
+      "note": "promoted 2026-07-20 (dormant-library sweep)"
+    },
+    {
+      "file": "idle_animation04.vrma",
+      "directory": "idle",
+      "name": "Idle 04",
+      "role": "gesture",
+      "tags": [
+        "manual"
+      ]
+    },
+    {
+      "file": "idle_animation05.vrma",
+      "directory": "idle",
+      "name": "Idle 05",
+      "role": "gesture",
+      "tags": [
+        "manual"
+      ],
+      "disabled": true,
+      "note": "audit 2026-07-19: truncated vrma, fails to load at all"
+    },
+    {
+      "file": "idle_animation06.vrma",
+      "directory": "idle",
+      "name": "Idle 06",
+      "role": "gesture",
+      "tags": [
+        "manual"
+      ],
+      "disabled": true,
+      "note": "audit 2026-07-19: truncated vrma, fails to load at all"
+    },
+    {
+      "file": "idle_animation07.vrma",
+      "directory": "idle",
+      "name": "Idle 07",
+      "role": "talk",
+      "tags": [
+        "manual"
+      ]
+    },
+    {
+      "file": "VRMA_01.vrma",
+      "directory": "action",
+      "name": "Show Full Body",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_02.vrma",
+      "directory": "action",
+      "name": "Greeting",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_03.vrma",
+      "directory": "action",
+      "name": "Peace Sign",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_04.vrma",
+      "directory": "action",
+      "name": "Shoot",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_05.vrma",
+      "directory": "action",
+      "name": "Spin",
+      "role": "gesture",
+      "tags": [
+        "manual"
+      ]
+    },
+    {
+      "file": "VRMA_06.vrma",
+      "directory": "action",
+      "name": "Model Pose",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_07.vrma",
+      "directory": "action",
+      "name": "Squat",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_08.vrma",
+      "directory": "action",
+      "name": "Action Look Around",
+      "role": "gesture"
+    },
+    {
+      "file": "VRMA_09.vrma",
+      "directory": "action",
+      "name": "Action 09",
+      "role": "gesture"
+    },
+    {
+      "file": "Blush.vrma",
+      "directory": "sourced",
+      "name": "Blush Pose",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "Thinking.vrma",
+      "directory": "sourced",
+      "name": "Thinking Pose",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ],
+      "disabled": true,
+      "note": "2026-07-20: disabled (also removed from poke actions)"
+    },
+    {
+      "file": "Goodbye.vrma",
+      "directory": "sourced",
+      "name": "Goodbye Wave",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "LookAround.vrma",
+      "directory": "sourced",
+      "name": "Look Around",
+      "role": "subtle",
+      "tags": [
+        "sourced"
+      ],
+      "additive": false,
+      "note": "re-enabled 2026-07-20"
+    },
+    {
+      "file": "Relax.vrma",
+      "directory": "sourced",
+      "name": "Relax Pose",
+      "role": "subtle",
+      "tags": [
+        "sourced"
+      ],
+      "additive": false,
+      "note": "re-enabled 2026-07-20"
+    },
+    {
+      "file": "Sleepy.vrma",
+      "directory": "sourced",
+      "name": "Sleepy",
+      "role": "subtle",
+      "tags": [
+        "sourced"
+      ],
+      "additive": false,
+      "note": "re-enabled 2026-07-20"
+    },
+    {
+      "file": "Clapping.vrma",
+      "directory": "sourced",
+      "name": "Clapping",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ],
+      "additive": true,
+      "disabled": true,
+      "note": "2026-07-20: disabled (removed from happy pool; milestone 25 now plays Cheering)"
+    },
+    {
+      "file": "Angry.vrma",
+      "directory": "sourced",
+      "name": "Angry Pose",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "Sad.vrma",
+      "directory": "sourced",
+      "name": "Sad Pose",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "Surprised.vrma",
+      "directory": "sourced",
+      "name": "Surprised Pose",
+      "role": "gesture",
+      "tags": [
+        "sourced"
+      ],
+      "disabled": true,
+      "note": "2026-07-20: disabled (removed from surprised pool)"
+    },
+    {
+      "file": "Jump.vrma",
+      "directory": "sourced",
+      "name": "Jump",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "manual"
+      ]
+    },
+    {
+      "file": "UAL_Idle_Talking_Loop.vrma",
+      "directory": "sourced",
+      "name": "Talking",
+      "role": "talk",
+      "tags": [
+        "sourced"
+      ]
+    },
+    {
+      "file": "UAL_Crouch_Fwd_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Crouch Fwd Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Crouch_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Crouch Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Dance_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Dance Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Death01.vrma",
+      "directory": "ual",
+      "name": "UAL Death 01",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Driving_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Driving Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Fixing_Kneeling.vrma",
+      "directory": "ual",
+      "name": "UAL Fixing Kneeling",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Hit_Chest.vrma",
+      "directory": "ual",
+      "name": "UAL Hit Chest",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Hit_Head.vrma",
+      "directory": "ual",
+      "name": "UAL Hit Head",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Idle_Torch_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Idle Torch Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Interact.vrma",
+      "directory": "ual",
+      "name": "UAL Interact",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Jog_Fwd_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Jog Fwd Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Jump_Land.vrma",
+      "directory": "ual",
+      "name": "UAL Jump Land",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Jump_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Jump Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Jump_Start.vrma",
+      "directory": "ual",
+      "name": "UAL Jump Start",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_PickUp_Table.vrma",
+      "directory": "ual",
+      "name": "UAL Pickup Table",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Aim_Down.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Aim Down",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Aim_Neutral.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Aim Neutral",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Aim_Up.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Aim Up",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Reload.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Reload",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Pistol_Shoot.vrma",
+      "directory": "ual",
+      "name": "UAL Pistol Shoot",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Punch_Cross.vrma",
+      "directory": "ual",
+      "name": "UAL Punch Cross",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Punch_Enter.vrma",
+      "directory": "ual",
+      "name": "UAL Punch Enter",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Punch_Jab.vrma",
+      "directory": "ual",
+      "name": "UAL Punch Jab",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Push_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Push Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Roll.vrma",
+      "directory": "ual",
+      "name": "UAL Roll",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Roll_RM.vrma",
+      "directory": "ual",
+      "name": "UAL Roll Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sitting_Enter.vrma",
+      "directory": "ual",
+      "name": "UAL Sitting Enter",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sitting_Exit.vrma",
+      "directory": "ual",
+      "name": "UAL Sitting Exit",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sitting_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Sitting Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sitting_Talking_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Sitting Talking Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Spell_Simple_Enter.vrma",
+      "directory": "ual",
+      "name": "UAL Spell Simple Enter",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Spell_Simple_Exit.vrma",
+      "directory": "ual",
+      "name": "UAL Spell Simple Exit",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Spell_Simple_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Spell Simple Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Spell_Simple_Shoot.vrma",
+      "directory": "ual",
+      "name": "UAL Spell Simple Shoot",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sprint_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Sprint Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Swim_Fwd_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Swim Fwd Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Swim_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Swim Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sword_Attack.vrma",
+      "directory": "ual",
+      "name": "UAL Sword Attack",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sword_Attack_RM.vrma",
+      "directory": "ual",
+      "name": "UAL Sword Attack Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Sword_Idle.vrma",
+      "directory": "ual",
+      "name": "UAL Sword Idle",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL_Walk_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL Walk Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Chest_Open.vrma",
+      "directory": "ual",
+      "name": "UAL2 Chest Open",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_ClimbUp_1m_RM.vrma",
+      "directory": "ual",
+      "name": "UAL2 Climbup 1m Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Consume.vrma",
+      "directory": "ual",
+      "name": "UAL2 Consume",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Farm_Harvest.vrma",
+      "directory": "ual",
+      "name": "UAL2 Farm Harvest",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Farm_PlantSeed.vrma",
+      "directory": "ual",
+      "name": "UAL2 Farm Plantseed",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Farm_Watering.vrma",
+      "directory": "ual",
+      "name": "UAL2 Farm Watering",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Hit_Knockback.vrma",
+      "directory": "ual",
+      "name": "UAL2 Hit Knockback",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Hit_Knockback_RM.vrma",
+      "directory": "ual",
+      "name": "UAL2 Hit Knockback Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_Lantern_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Lantern Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_No_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle No Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_Rail_Call.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Rail Call",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_Rail_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Rail Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_Shield_Break.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Shield Break",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_Shield_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Shield Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Idle_TalkingPhone_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Idle Talkingphone Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_LayToIdle.vrma",
+      "directory": "ual",
+      "name": "UAL2 Laytoidle",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Melee_Hook.vrma",
+      "directory": "ual",
+      "name": "UAL2 Melee Hook",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Melee_Hook_Rec.vrma",
+      "directory": "ual",
+      "name": "UAL2 Melee Hook Rec",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_NinjaJump_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Ninjajump Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_NinjaJump_Land.vrma",
+      "directory": "ual",
+      "name": "UAL2 Ninjajump Land",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_NinjaJump_Start.vrma",
+      "directory": "ual",
+      "name": "UAL2 Ninjajump Start",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_OverhandThrow.vrma",
+      "directory": "ual",
+      "name": "UAL2 Overhandthrow",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Shield_Dash_RM.vrma",
+      "directory": "ual",
+      "name": "UAL2 Shield Dash Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Shield_OneShot.vrma",
+      "directory": "ual",
+      "name": "UAL2 Shield Oneshot",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Slide_Exit.vrma",
+      "directory": "ual",
+      "name": "UAL2 Slide Exit",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Slide_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Slide Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Slide_Start.vrma",
+      "directory": "ual",
+      "name": "UAL2 Slide Start",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Block.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Block",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Dash_RM.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Dash Rm",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_A.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular A",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_A_Rec.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular A Rec",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_B.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular B",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_B_Rec.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular B Rec",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_C.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular C",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Sword_Regular_Combo.vrma",
+      "directory": "ual",
+      "name": "UAL2 Sword Regular Combo",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_TreeChopping_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Treechopping Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Walk_Carry_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Walk Carry Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Yes.vrma",
+      "directory": "ual",
+      "name": "UAL2 Yes",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Zombie_Idle_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Zombie Idle Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Zombie_Scratch.vrma",
+      "directory": "ual",
+      "name": "UAL2 Zombie Scratch",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    },
+    {
+      "file": "UAL2_Zombie_Walk_Fwd_Loop.vrma",
+      "directory": "ual",
+      "name": "UAL2 Zombie Walk Fwd Loop",
+      "role": "gesture",
+      "tags": [
+        "sourced",
+        "ual2",
+        "manual"
+      ],
+      "lazy": true
+    }
+  ]
+}

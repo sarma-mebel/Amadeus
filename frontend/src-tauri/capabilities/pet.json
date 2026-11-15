@@ -1,0 +1,39 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "pet",
+  "description": "Desktop-pet overlay window permissions",
+  "windows": [
+    "pet"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "allow-set-pet-click-through",
+    "allow-show-main-window",
+    "allow-capture-screenshot",
+    "allow-ambient-signals",
+    "allow-pet-cursor-context",
+    "allow-set-pet-window-preset",
+    "allow-is-foreground-fullscreen",
+    "allow-pet-perch-state",
+    "allow-pet-roam-context",
+    "allow-animate-pet-window-to",
+    "allow-cancel-pet-window-animation",
+    "allow-set-autostart",
+    "allow-get-autostart",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-ignore-cursor-events",
+    "core:window:allow-close",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-hide",
+    "core:window:allow-show",
+    "notification:default"
+  ]
+}

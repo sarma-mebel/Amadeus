@@ -1,0 +1,78 @@
+[package]
+name = "amadeus-desktop"
+version = "0.1.0"
+description = "Standalone desktop shell for the Amadeus Kurisu assistant"
+authors = ["Amadeus Contributors"]
+edition = "2021"
+
+[features]
+# Enabled by the GPU installer build (`cargo`/`tauri build --features qwen`).
+# Makes the shell pass `--prefer-qwen` to the backend sidecar so it uses the
+# Qwen3 cloned voice when a CUDA GPU is available.
+default = []
+qwen = []
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+image = { version = "0.25", default-features = false, features = ["png"] }
+keyring = "3"
+portpicker = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# "webview-data-url": lets WebviewUrl::External/navigate() point at a
+# data:text/html;base64,... URL — without this feature the webview manager
+# rejects data: URLs at window-creation time with InvalidWebviewUrl, which
+# would silently break the instant-on splash window below (build_pet_window
+# would fail and fall through to the "no pet spawned" error path).
+tauri = { version = "2", features = ["tray-icon", "webview-data-url"] }
+tauri-plugin-shell = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-notification = "2"
+# Desktop-only global hotkey (CmdOrCtrl+Shift+K) that recovers a click-through
+# pet window without going through the tray. Tauri 2's plugin is desktop-only
+# by design (mobile has no concept of a global OS-level shortcut), which
+# matches this app — the pet overlay itself is a Windows-first feature.
+tauri-plugin-global-shortcut = "2"
+# "Launch at login" toggle (Settings). Desktop-only by construction (the
+# crate's lib.rs itself is `#![cfg(not(any(android, ios)))]`, same pattern as
+# global-shortcut above) — no extra cfg needed here. We wrap its
+# enable/disable/is_enabled behind our own #[tauri::command]s rather than
+# using the plugin's JS guest bindings, so there's no npm package to add and
+# the ACL story stays the same shape as every other command in this file.
+tauri-plugin-autostart = "2"
+# Auto-updater: same convention as autostart — the plugin's Rust API behind
+# our own #[tauri::command]s (check_app_update / install_app_update), no npm
+# guest bindings. Signed artifacts against the pubkey in tauri.conf.json;
+# manifest lives at the GitHub release's latest.json (scripts/make_update_manifest.py).
+tauri-plugin-updater = "2"
+url = "2"
+xcap = "0.4"
+
+# Windows-only foreground-window/monitor introspection for fullscreen
+# detection (`is_foreground_fullscreen`). Pinned to "0.59" specifically
+# (not "0.6x"/"*") because tauri-plugin-global-shortcut's `global-hotkey`
+# dependency already resolves windows-sys 0.59.0 in this tree — matching it
+# lets cargo unify onto that existing version instead of pulling a second
+# windows-sys major version in. Feature groups: foreground window + rect,
+# monitor info, process id compare (fullscreen detection), and
+# StationsAndDesktops (OpenInputDesktop/CloseDesktop — workstation
+# lock/unlock detection, see `lock_detect`).
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Threading",
+    "Win32_System_StationsAndDesktops",
+    "Win32_System_Power",
+] }
+# WinRT surface for ambient_signals' now-playing metadata (System Media
+# Transport Controls — covers Spotify, browsers, most players). Pinned to
+# "0.61" because this tree already resolves windows 0.61.3 (via the tauri
+# stack), so cargo unifies instead of pulling a second copy. windows-sys
+# above stays for the raw Win32 calls; the two crates coexist by design.
+windows = { version = "0.61", features = ["Media_Control", "Foundation"] }

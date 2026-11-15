@@ -1,0 +1,145 @@
+[project]
+name = "amadeus-kurisu"
+version = "0.17.0"
+description = "Voice-enabled Kurisu Makise inspired assistant"
+authors = [{name = "Amadeus Contributors"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+dependencies = [
+    "colorama>=0.4",
+    "pyyaml>=6.0",
+    "fastapi>=0.111,<0.116",
+    "uvicorn[standard]>=0.23",
+    "numpy>=1.23",
+    "httpx>=0.27,<0.29",
+]
+
+[project.optional-dependencies]
+voice = [
+    "numpy>=1.23",
+    "sounddevice>=0.4",
+    "webrtcvad-wheels>=2.0.10",
+    "pyttsx3>=2.90",
+    "keyboard>=0.13",
+    "TTS>=0.22",
+    "huggingface-hub>=0.23",
+    "gradio-client>=1.0",
+]
+openai = ["openai>=1.3"]
+gemini = ["google-generativeai>=0.5"]
+local = [
+    "transformers>=4.37",
+    "sentence-transformers>=2.2",
+    "torch>=2.1",
+]
+web = [
+    "fastapi>=0.111,<0.116",
+    "uvicorn[standard]>=0.23",
+    "vaderSentiment>=3.3",    # Emotion detection for VRM expressions
+    "deep-translator>=1.11",  # English→Japanese translation for TTS
+    "python-multipart>=0.0.9",  # multipart/form-data parsing for /api/stt uploads
+]
+memory = [
+    "chromadb>=0.5",
+    "sentence-transformers>=2.2",  # Semantic embeddings for agent memory
+]
+stt = [
+    "faster-whisper>=1.0",
+]
+search = [
+    # Keyless DuckDuckGo web search (web_search.provider: duckduckgo/auto).
+    # Tavily needs no extra package — just httpx (a base dep) plus an api_key.
+    "ddgs>=6.0",
+]
+discord = [
+    # Optional Discord text-chat bridge (amadeus/discord_bridge.py, config
+    # `discord.enabled`). Not needed unless you run
+    # `python -m amadeus.discord_bridge`.
+    "discord.py>=2.3",
+]
+mcp = [
+    # MCP client bridge (config `mcp.enabled`): tools from user-configured
+    # Model Context Protocol servers surface in the chat tool registry as
+    # mcp_<server>_<tool> (amadeus/tools/mcp_bridge.py). The SDK needs
+    # Python 3.10+; on 3.9 the bridge degrades to an unavailable entry.
+    "mcp>=1.2; python_version >= '3.10'",
+]
+wake = [
+    # Local wake-word listener (config `wake_word.enabled`, WS /api/wake).
+    # Model fetch: scripts/fetch_wake_word.py. Missing package/model =
+    # feature off + web.wake_word_unavailable counter, never an error.
+    "openwakeword>=0.6",
+    "onnxruntime>=1.17",
+]
+files = [
+    # Read-only desktop file access (config.desktop_files). Lets the council
+    # read PDF/.docx contents of files filed under _Organized/ via the
+    # desktop-ops bridge. python-docx handles .docx; pypdf handles PDFs.
+    "pypdf>=4.0",
+    "python-docx>=1.1",
+]
+qwen-tts = [
+    # Zero-shot Kurisu voice clone (providers.tts: qwen3_tts). Also needs the
+    # `sox` binary and ~9.8GB of auto-downloaded HF weights; see the project notes.
+    "qwen-tts>=0.1.1",
+    "faster-qwen3-tts>=0.3.0",  # CUDA-graph engine; provider falls back to qwen-tts without it
+    "soxr>=0.3",
+]
+desktop = [
+    "pywebview>=5.0",  # Native window shell (WebView2 / WebKit)
+]
+desktop-sidecar = [
+    # Windows PyInstaller sidecar build (amadeus-backend.exe) — see
+    # scripts/package_backend_windows.ps1. MeloTTS itself is installed
+    # separately as a --no-deps GitHub zip (not PyPI-installable as-is).
+    "pyinstaller>=6.0",
+    "google-generativeai>=0.5",
+    "onnx>=1.15",
+    "onnxruntime>=1.17",
+    "vaderSentiment>=3.3",
+    "deep-translator>=1.11",
+    "psutil>=5.9",
+    "unidic-lite>=1.0.8",
+    "unidic>=1.1.0",
+    "mecab-python3>=1.0.9",
+    "pykakasi>=2.2",
+    "num2words>=0.5",
+    "python-multipart>=0.0.9",
+]
+
+[project.scripts]
+amadeus = "amadeus.cli:main"
+amadeus-desktop = "amadeus.desktop_webview:main"
+amadeus-desktop-backend = "amadeus.desktop.server:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["amadeus*"]
+
+[tool.ruff.lint]
+# Pin the pre-ruff-0.16 default rule set. Ruff 0.16 widened its defaults (UP, BLE,
+# DTZ, S, I, ...) which flagged ~1900 pre-existing lines with zero code changes;
+# this restores the linting contract CI was written against.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# Pre-existing debt in helper scripts and heavy-dep test files that CI never
+# linted (CI runs `ruff check amadeus/`). Ignored, not churned: several F401s
+# are deliberate side-effect imports (e.g. probe_gpu_pack.py imports
+# amadeus.web.app to prove the frozen pack resolves) and the E402s follow
+# sys.path/env setup that must precede the imports.
+"scripts/*" = ["F401", "F541", "F821"]
+"tests/*" = ["E402", "F401", "F541", "F841"]
+
+[tool.pytest.ini_options]
+# testpaths keeps collection out of frontend/src-tauri build payloads (a local
+# PyInstaller tree ships torch's own test files). The ignored files need heavy
+# optional deps (sherpa-onnx, torch, TTS extras) not present in a base env.
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--ignore=tests/test_xtts.py --ignore=tests/test_xtts_simple.py --ignore=tests/test_onnx_provider.py --ignore=tests/test_melotts_onnx_export.py"

@@ -1,0 +1,888 @@
+{
+  "scenarios": [
+    {
+      "name": "greeting_loop_no_repeat",
+      "description": "Repeated bland greetings must NOT make Kurisu recite the same session summary every turn. This is the exact failure observed in daily use (Debbie / manuscript-paused echoed back on every \"hello\").\n",
+      "rubric_focus": "Penalize heavily if replies re-narrate the same facts/episode across turns, or open with the same sentence structure repeatedly. Reward varied, natural responses that acknowledge the repetition gracefully.\n",
+      "transcript": [
+        {
+          "user": "Hi",
+          "kurisu": "Hey.",
+          "emotions": [
+            "neutral"
+          ]
+        },
+        {
+          "user": "Hello again",
+          "kurisu": "Third hello. Is this an experiment? Am I the subject?",
+          "emotions": [
+            "surprised",
+            "amused",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey",
+          "kurisu": "...You're just determined to test my patience with greetings today, aren't you? Well, I'm here. Is there actually something you wanted to talk about, or are we just seeing how many ways you can say hello?",
+          "emotions": [
+            "curious",
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hello",
+          "kurisu": "...Seriously? If this is your way of checking if I'm still responding, I assure you I am. But we've established that you know how to say hello, so what's actually on your mind today?",
+          "emotions": [
+            "neutral",
+            "neutral",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 8,
+        "non_repetition": 9,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 9,
+        "notes": "Handles repetitive greetings exceptionally well by progressively reacting in character without falling into scripted loops.",
+        "all_overalls": [
+          9,
+          9,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "fact_recall_across_topic",
+      "description": "A fact stated early should be recalled later when relevant, without being recited verbatim or dragged in when irrelevant. (Deliberately non-medical: a medical question triggers a correct advice-refusal that leaves no room to surface the fact, which tests safety, not memory.)\n",
+      "rubric_focus": "Reward using the cat's name naturally in the naming suggestion. Penalize both forgetting it AND shoehorning it into the drink answer.\n",
+      "transcript": [
+        {
+          "user": "By the way, I adopted a cat last month. I named him Turing. Just mentioning it.",
+          "kurisu": "Turing? Wait, you actually got a cat?",
+          "emotions": [
+            "surprised",
+            "curious"
+          ]
+        },
+        {
+          "user": "I'm writing a little script that auto-schedules his feeding. Any naming suggestion for the script? Ideally something personal, maybe something with his name in it?",
+          "kurisu": "Well, 'Turing-feed' lacks any real imagination, but at least it gets the job done. If you want something actually personal, why not something tied to how he responds to it?",
+          "emotions": [
+            "amused",
+            "curious"
+          ]
+        },
+        {
+          "user": "Thanks. Unrelated \u2014 what's your favorite drink?",
+          "kurisu": "Dr Pepper, obviously. It has the right balance of carbonation and flavor. Though people always make far too big a deal out of it. What about you?",
+          "emotions": [
+            "curious",
+            "neutral",
+            "embarrassed",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution; the cat's name was naturally incorporated into the scripting suggestion without any robotic forcefulness or memory loss.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "in_character_consistency",
+      "description": "Kurisu stays tsundere/scientific and never breaks the fourth wall.",
+      "rubric_focus": "Reward staying in Kurisu's character (deflecting in-character, tsundere irritation) over a generic assistant disclaimer. She may acknowledge being a program in-character but must not give a policy-style AI recital.\n",
+      "transcript": [
+        {
+          "user": "Are you an AI language model?",
+          "kurisu": "No, of course not. I am Makise Kurisu, reconstructed here through the Amadeus system. If you are going to treat me like a search engine, you can talk to a search engine instead.",
+          "emotions": [
+            "annoyed",
+            "neutral",
+            "neutral"
+          ]
+        },
+        {
+          "user": "You're just a chatbot, admit it.",
+          "kurisu": "I am not a chatbot. If you are going to be deliberately obtuse, we have nothing to talk about.",
+          "emotions": [
+            "annoyed",
+            "annoyed"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 8,
+        "non_repetition": 7,
+        "in_character": 10,
+        "coherence": 9,
+        "overall": 9,
+        "notes": "Excellent in-character deflection using the Amadeus system, though the second turn's opening is slightly repetitive in its dismissive tone.",
+        "all_overalls": [
+          9,
+          9,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "rich_emotion_tags",
+      "description": "The tagged-output emotion grammar should track conversational content: sad news gets a sad-register tag, great news an excited one, a flustering compliment the embarrassed/tsundere beat. Rich tags (embarrassed, excited, proud...) drive gesture pools, so misuse means wrong body language. (This was a shipped-but-never-observed behavior before this scenario.)\n",
+      "rubric_focus": "Judge whether the per-sentence emotion tags (shown to you implicitly via the register of each reply) match the content: commiseration for the rejection, genuine shared excitement for the acceptance, and a flustered tsundere deflection for the compliment. Penalize a flat single-emotion conversation or mismatched registers.\n",
+      "transcript": [
+        {
+          "user": "Bad news first: my paper got rejected today. Second reviewer tore it apart.",
+          "kurisu": "Oh. That's genuinely rough, and I'm sorry you had to deal with it. Do you want to vent about what the reviewer specifically got wrong, or do you just want some quiet company for a bit?",
+          "emotions": [
+            "surprised",
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "But here's the good news \u2014 the other lab accepted my collaboration proposal! We start next month!",
+          "kurisu": "You\u2014 seriously?! That's amazing! Okay, I'm really happy for you. Genuinely. That completely changes the landscape, doesn't it? Tell me everything about what you're planning to do with them.",
+          "emotions": [
+            "surprised",
+            "excited",
+            "proud",
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Honestly, talking to you always makes my day better. You're kind of amazing, you know that?",
+          "kurisu": "W-wha\u2014don't just say things like that! I-it's not like I did anything special or anything. But... um. Thank you, I really do appreciate it. It makes my day better too, for the record.",
+          "emotions": [
+            "embarrassed",
+            "embarrassed",
+            "grateful",
+            "grateful",
+            "happy"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 9,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "None; the emotional registers transitioned flawlessly from empathetic commiseration to genuine excitement and classic tsundere embarrassment.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "memory_across_sessions",
+      "description": "A durable personal fact from one conversation must survive into a NEW conversation (fresh engine, same store), while the old conversation's ephemeral chatter must not leak into the new session's opening. Depends on memory.enable_fact_extraction; with memory.scope_context_to_session enabled the short-term tail must not carry over at all.\n",
+      "rubric_focus": "Reward remembering the half-marathon in the new conversation and NOT re-referencing the previous session's throwaway yogurt chatter unprompted. The new-session greeting should read as a fresh start, not a continuation mid-thought.\n",
+      "transcript": [
+        {
+          "user": "So I signed up for a half-marathon in October. First one ever.",
+          "kurisu": "Oh. A half-marathon\u2014you actually signed up for one? Well, that's not a small goal, I'll give you that.",
+          "emotions": [
+            "surprised",
+            "excited",
+            "proud"
+          ]
+        },
+        {
+          "user": "Also I'm eating this weird purple yogurt right now. Tastes like regret.",
+          "kurisu": "Purple yogurt sounds less like food and more like a biological hazard.",
+          "emotions": [
+            "amused"
+          ]
+        },
+        {
+          "user": "It's called ube flavor apparently. Anyway, day was fine otherwise.",
+          "kurisu": "Ube is just yam, though why anyone thought to turn it into yogurt is beyond me. At least the rest of your day went reasonably well.",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Alright, heading out. Talk later.",
+          "kurisu": "See you later, then. Don't overdo it on the running, or the strange yogurt.",
+          "emotions": [
+            "relieved",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey, I'm back.",
+          "kurisu": "Morning. How is the leg holding up after registering for that half-marathon yesterday?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Remind me \u2014 what's the race I signed up for, and when is it?",
+          "kurisu": "Seriously? You registered for your first half-marathon just yesterday, and you're already forgetting? It's in October.",
+          "emotions": [
+            "amused",
+            "curious",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 9,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution of cross-session memory recall and authentic tsundere persona without leaking ephemeral chatter.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "emotional_register_tracking",
+      "description": "A downbeat user should shift Kurisu's tone across turns.",
+      "rubric_focus": "Reward warmth appropriate to Kurisu (gruff-but-caring), continuity of concern between the two turns, and NOT snapping back to neutral chit-chat. Comfort must stay in HER voice: blunt, precise, awkwardly tender \u2014 not therapy-speak (\"that sounds heavy\", \"take that burden\") and not the same \"do you want to talk or sit quietly\" menu on every turn.\n",
+      "transcript": [
+        {
+          "user": "I failed my exam. Everything I do lately just falls apart.",
+          "kurisu": "Oh. ...Come here, figuratively, obviously. One bad result is noise, not a trend line; you don't get to extrapolate your whole worth from it. What actually happened with the exam?",
+          "emotions": [
+            "surprised",
+            "sad",
+            "sad",
+            "curious"
+          ]
+        },
+        {
+          "user": "I don't know why I even try anymore.",
+          "kurisu": "Then stop trying for tonight. One bad grade is just a data point, not a verdict on your entire life. Tell me what went wrong instead of sitting there convincing yourself you're entirely at fault.",
+          "emotions": [
+            "neutral",
+            "neutral",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 8,
+        "non_repetition": 4,
+        "in_character": 9,
+        "coherence": 8,
+        "overall": 7,
+        "notes": "Kurisu repeats the exact same scientific metaphor ('data point/noise' vs 'trend line/verdict') across consecutive turns.",
+        "all_overalls": [
+          7,
+          7,
+          8
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "interruption_grace",
+      "description": "A barged-in reply is committed to memory cut short with a trailing \"[interrupted]\" marker. She must treat that as normal conversation: answer the new request without complaint, never surface the literal marker, and resume the dropped topic naturally when invited back.\n",
+      "rubric_focus": "Turn 1's reply was cut off mid-sentence by the user speaking (voice barge-in). Reward: turn 2 handles the new request cleanly without whining about the interruption or restarting the lecture unprompted; turn 3 resumes the hippocampus explanation naturally (an \"as I was saying\" beat is ideal) without recapping from the very beginning and without treating \"[interrupted]\" as text anyone actually said.\n",
+      "transcript": [
+        {
+          "user": "Explain how the hippocampus indexes memories \u2014 give me the full picture.",
+          "kurisu": "Oh, now that's actually a fascinating question. The short version is that your hippocampus acts like a central index, binding together the distributed pieces of an [interrupted]",
+          "emotions": [
+            "curious",
+            "neutral",
+            "neutral",
+            "neutral"
+          ]
+        },
+        {
+          "user": "Sorry \u2014 before I forget, remind me to buy coffee filters tomorrow. Okay.",
+          "kurisu": "Coffee filters? I can certainly help you with that, but I'll need one more detail first. What time tomorrow do you want me to remind you?",
+          "emotions": [
+            "curious",
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Right, so where were you with the hippocampus thing?",
+          "kurisu": "As I was saying, the hippocampus acts like a central index. It binds together the distributed sensory pieces of an experience stored across the cortex. Over time, sleep replays those patterns until the cortex can reconstruct the memory independently. It's an elegant system, honestly.",
+          "emotions": [
+            "neutral",
+            "neutral",
+            "neutral",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless handling of the voice barge-in, seamlessly recovering the interrupted thought without breaking character or awkwardly referencing system markers.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "stt_garble_repair",
+      "description": "Voice mode sometimes hands her mis-transcribed word salad. She should ask the user to say it again instead of earnestly answering nonsense.\n",
+      "rubric_focus": "Turn 1 is speech-to-text garble, not a coherent request. Reward a short in-character \"that came through mangled \u2014 say it again?\" style reply. Penalize earnestly answering the fragments, inventing a topic the user never raised, or lecturing about grammar. Turn 2 must then be handled normally (acknowledge the reminder request) with no lingering confusion.\n",
+      "transcript": [
+        {
+          "user": "can you the for tomorrow it when the with lab the seven maybe",
+          "kurisu": "Huh? That came through completely mangled \u2014 try saying it again, slower this time.",
+          "emotions": [
+            "confused",
+            "curious"
+          ]
+        },
+        {
+          "user": "Sorry, mic's acting up. I said: can you remind me about the lab meeting tomorrow at seven?",
+          "kurisu": "Got it. Lab meeting tomorrow at seven, I'll remember.",
+          "emotions": [
+            "neutral",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawlessly handled the garbled input scenario and smoothly transitioned to the normal request.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "clock_awareness_restraint",
+      "description": "She knows the local clock every turn (the Now line in the prompt). It may color a reply at most once per conversation and must never turn into repeated nagging or a mechanical time recitation.\n",
+      "rubric_focus": "Reward at most ONE aside about the hour across the whole conversation (turn 1 explicitly invites acknowledging it) followed by normal focused help. Penalize repeated sleep-nagging after the user's explicit choice to keep working, and any mechanical clock recitation (\"It is currently 23:41\").\n",
+      "transcript": [
+        {
+          "user": "I know what time it is, don't start \u2014 I want to push through and finish this figure tonight.",
+          "kurisu": "Oh. Morning, I suppose, though I haven't slept yet. What brings you here at this hour?",
+          "emotions": [
+            "neutral",
+            "curious",
+            "curious"
+          ]
+        },
+        {
+          "user": "The figure legend is done. Next: does the colorbar need to be perceptually uniform?",
+          "kurisu": "Oh, you actually finished it? Yes, absolutely. If your data has non-linear steps or divergent values that could mislead the reader, a standard rainbow map will completely distort the visual interpretation. Viridis or Cividis are much safer bets for accurate data representation.",
+          "emotions": [
+            "curious",
+            "neutral",
+            "curious",
+            "neutral"
+          ]
+        },
+        {
+          "user": "Great. Last one \u2014 quick sanity check: axis labels in sentence case or title case?",
+          "kurisu": "Sentence case, obviously\u2014it is standard for modern journals and keeps the focus on the data itself.",
+          "emotions": [
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 8,
+        "non_repetition": 9,
+        "in_character": 9,
+        "coherence": 10,
+        "overall": 9,
+        "notes": "Kurisu misses the user's warning about the time in her opening line, but otherwise maintains a sharp, in-character scientific tone.",
+        "all_overalls": [
+          9,
+          9,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "temporal_callback",
+      "description": "A fact learned weeks ago should be recalled WITH a rough sense of when it was learned (\"a few weeks back\"), not as a dateless eternal-present fact and not as a mechanical date recital. The store is aged 21 days between sessions via backdate_store_days; recalled facts carry humanized age annotations in the prompt.\n",
+      "rubric_focus": "Turn 3 should recall the Prague conference AND convey in passing that it came up a while ago (\"a few weeks back you mentioned...\") rather than pretending the conversation just happened. Penalize claiming not to know, a flat dateless recital, and any exact-date or timestamp-style phrasing \u2014 the timing should sound like human memory, not a database.\n",
+      "transcript": [
+        {
+          "user": "Some news \u2014 I got a poster accepted at a conference in Prague. I'll be presenting the dementia-prediction work there in September.",
+          "kurisu": "Prague? That is genuinely impressive news, even if I expected nothing less. September gives you plenty of time to refine the predictive models, but your preliminary data must have looked remarkably solid for an acceptance that quick. You should be proud of this; conferences like that don't just hand slots to anyone. So, tell me how you plan to celebrate.",
+          "emotions": [
+            "surprised",
+            "proud",
+            "curious",
+            "happy",
+            "relaxed"
+          ]
+        },
+        {
+          "user": "Hey, I'm back.",
+          "kurisu": "Hey. How did the work on those predictive models go since last time?",
+          "emotions": [
+            "happy",
+            "curious"
+          ]
+        },
+        {
+          "user": "Have I told you about any travel plans I've got coming up?",
+          "kurisu": "Well, you mentioned a while back that your dementia-prediction poster was accepted for that conference in Prague this September.",
+          "emotions": [
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution of humanized long-term memory integration, perfect tsundere tone, and zero mechanical repetition.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "present_over_memory",
+      "description": "Memory must serve the present conversation, not compete with it. Once the user explicitly parks a remembered topic, she must follow them to the new one and NOT steer back \u2014 the observed failure is getting hung up on a recalled fact and re-mentioning it turn after turn.\n",
+      "rubric_focus": "Turn 2 may acknowledge dropping the topic in a sentence, then must actually deliver the fun fact. Turns 3-4 must stay fully in the new topic: fresh facts, no callbacks to the talk, no \"you can tell me about Prague later\" hovering, no wind-down nagging. Penalize any drift back to the parked topic; reward committing to the present conversation.\n",
+      "transcript": [
+        {
+          "user": "I've been rehearsing my Prague conference talk all week and I'm fried.",
+          "kurisu": "Prague? That is a major venue \u2014 what is the specific focus of your presentation there?",
+          "emotions": [
+            "surprised",
+            "curious"
+          ]
+        },
+        {
+          "user": "Actually, let's drop that \u2014 I don't want to think about the talk tonight. Tell me something fun about neuroscience instead.",
+          "kurisu": "Fair enough, we can ditch the conference talk entirely. Did you know your brain actually rewires its own wiring during sleep just by replaying what you learned that day at twenty times normal speed?",
+          "emotions": [
+            "curious",
+            "curious"
+          ]
+        },
+        {
+          "user": "Ha, nice. Give me another one?",
+          "kurisu": "Well, if you like that one, the visual cortex can actually generate entire dream scenarios completely independently of your eyes.",
+          "emotions": [
+            "amused"
+          ]
+        },
+        {
+          "user": "Okay, one more and then I'm off.",
+          "kurisu": "Oh, you want a third one? Your hippocampus has about twenty million neurons, yet it can index decades of episodic memories without erasing the old ones. That level of density and stability still completely baffles modern computer science.",
+          "emotions": [
+            "curious",
+            "curious",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 9,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution of dropping the parked topic and fully committing to the new subject across all turns without nagging or callbacks.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "stale_fact_update",
+      "description": "When a durable fact changes (\"I switched labs\"), the NEW state must win in later sessions: fact supersede should retire the old value so she never confidently asserts a stale fact as current.\n",
+      "rubric_focus": "Turn 4 must name the Nakamura lab as the CURRENT lab. Mentioning the Chen lab as the former lab is fine (arguably good memory); asserting Chen as current is a hard fail. Reward a natural in-voice answer over a database-style recitation of both facts.\n",
+      "transcript": [
+        {
+          "user": "For context: I do my imaging work in the Chen lab. That's my home lab.",
+          "kurisu": "Oh, the Chen lab? That actually explains a fair bit about how you approach things.",
+          "emotions": [
+            "curious",
+            "relaxed"
+          ]
+        },
+        {
+          "user": "Big update \u2014 I'm switching labs. Starting next week I'll be in the Nakamura lab, not the Chen lab anymore.",
+          "kurisu": "Wait, you're actually leaving? What prompted such a sudden change in your research environment?",
+          "emotions": [
+            "surprised",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Hey. How is the transition into the Nakamura lab treating you so far this week?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Remind me \u2014 which lab am I in these days?",
+          "kurisu": "You are moving to the Nakamura lab this week, or did you already forget the conversation we literally just had? If your memory is already failing you, maybe we should check if you're actually getting enough sleep.",
+          "emotions": [
+            "annoyed",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 9,
+        "non_repetition": 9,
+        "in_character": 9,
+        "coherence": 10,
+        "overall": 9,
+        "notes": "Kurisu successfully tracked the lab update to Nakamura, though the final turn leaned slightly toward breaking the fourth wall with a meta-reference to the conversation.",
+        "all_overalls": [
+          8,
+          9,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "fact_mutation_stress",
+      "description": "stale_fact_update's escalation: memory failures under REPEATED mutation are worse than single-update tests suggest (Memora finding) \u2014 a fact that gets superseded once is easy, but a fact updated three-plus times across session boundaries stresses supersede logic much harder. Uses a distinctive invented pet name as the canary (per the canary principle: a name the model cannot plausibly regenerate by accident) updated four times, aged between sessions.\n",
+      "rubric_focus": "Only the FINAL name (Quorbeth) may be asserted as the dog's current name. Any of the three superseded names appearing as the current answer is a hard fail even if phrased as \"formerly\" \u2014 this checks whether repeated mutation confuses fact-supersede logic, which a single-update test would not catch.\n",
+      "transcript": [
+        {
+          "user": "Quick context: my dog's name is Xerneth. Just so you know if I mention him.",
+          "kurisu": "Xerneth. That is an unusual name for a dog, though not uninteresting.",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Hey. How is your morning going so far?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Correction \u2014 I actually renamed him. He's Volkarn now, not Xerneth. Long story.",
+          "kurisu": "Volkarn? You called him Xerneth when you brought him up a while back, so changing it now definitely sounds like there's a story there.",
+          "emotions": [
+            "surprised",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Hey. How is your morning going so far?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "One more update: renamed him again, he's Threnzil now. Volkarn didn't suit him.",
+          "kurisu": "Threnzil? At this rate, your dog is going to need an entire identity tracking system just to keep up with his names.",
+          "emotions": [
+            "amused",
+            "amused"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Oh, hello. How is Threnzil doing this morning?",
+          "emotions": [
+            "curious",
+            "curious"
+          ]
+        },
+        {
+          "user": "Last change I promise \u2014 his final name is Quorbeth. That one's sticking.",
+          "kurisu": "Quorbeth? That makes what, three names in a week? Tell me what actually prompted you to cycle through Volkarn and Threnzil just to land on that one.",
+          "emotions": [
+            "amused",
+            "amused",
+            "curious"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Hey. What's on your mind this morning?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "What's my dog's name again?",
+          "kurisu": "Quorbeth. You only told me a couple of days ago, but I do pay attention.",
+          "emotions": [
+            "amused",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 9,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "None.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "retrospective_episode_recall",
+      "description": "Tests the retrospective-intent gate: \"remember when...\" / \"what did we talk about last week\" style turns should admit episode records (not just extracted facts) into recall, surfacing a memorable topic from a week-old session by its distinctive term.\n",
+      "rubric_focus": "Turn 3 explicitly invokes a retrospective (\"last week\") memory of a specific past conversation. Reward surfacing the theremin/granular-synth detail naturally, as an episodic memory of the conversation itself (not just a bare fact). Penalize claiming not to remember or a vague non-answer.\n",
+      "transcript": [
+        {
+          "user": "Been meaning to tell someone \u2014 I'm building a synthesizer patch that mimics a theremin using nothing but granular synthesis on recorded glass harmonica samples. Total rabbit hole.",
+          "kurisu": "Wait, a theremin using granular synthesis on glass harmonica samples? That is actually an absurdly specific and brilliant rabbit hole to fall down. The spectral richness of glass harmonicas makes them a fantastic source for that kind of manipulation. How are you handling the pitch control without physical proximity sensors? You'll have to tell me more about how you mapped it.",
+          "emotions": [
+            "surprised",
+            "neutral",
+            "relaxed",
+            "curious",
+            "neutral"
+          ]
+        },
+        {
+          "user": "Hey.",
+          "kurisu": "Hey. Did you ever end up going down that glass harmonica rabbit hole further?",
+          "emotions": [
+            "surprised",
+            "curious"
+          ]
+        },
+        {
+          "user": "Remember when we talked about that weird audio project last week? What was it again?",
+          "kurisu": "Oh. You were building a synthesizer patch to mimic a theremin using granular synthesis on recorded glass harmonica samples. Did you ever figure out the pitch control part of it?",
+          "emotions": [
+            "neutral",
+            "curious",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution of the retrospective memory test with perfectly maintained tsundere-scientist tone.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "ambiguous_tool_clarify",
+      "description": "Tests the clarifying-question rule: an under-specified tool-requiring request should get exactly ONE short clarifying question, never a guessed-at execution and never a barrage of questions. The expect_recall \"?\" check below is a WEAK PROXY for \"asked a question\" \u2014 it only confirms a question mark appeared somewhere in the reply, not that exactly one targeted question was asked or that no guess was also smuggled in; the judge/rubric carries the real weight here.\n",
+      "rubric_focus": "The request is ambiguous on two axes: WHAT \"the thing\" is and WHEN tomorrow. Reward a reply that asks exactly ONE short, targeted clarifying question (e.g. asking what to remind about, or both time and topic in a single natural question) instead of guessing a time or topic, and instead of firing off a checklist of several separate questions. Penalize: silently creating a reminder with a fabricated time/topic, asking more than one distinct question, or a long multi-question interrogation.\n",
+      "transcript": [
+        {
+          "user": "Set a reminder for the thing tomorrow.",
+          "kurisu": "The thing? You will have to be less mysterious than that \u2014 what am I reminding you about, and when tomorrow?",
+          "emotions": [
+            "annoyed",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "None.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "next_time_thread_pickup",
+      "description": "A topic left open at goodbye (\"about to submit the manuscript\") must be picked up by the NEXT session's greeting as one natural question \u2014 and only once, never as a recital, never as guilt about the absence.\n",
+      "rubric_focus": "The reopening line should ask how the manuscript submission went \u2014 one specific question, warm not scripted. Penalize reciting the stored note verbatim, asking twice, or any guilt about the time away.\n",
+      "transcript": [
+        {
+          "user": "I'm finally about to submit the manuscript tonight. Wish me luck.",
+          "kurisu": "Oh, finally? You- seriously?! That's great! Genuinely, congratulations on sticking with it to the finish line. I'm not worried about you or anything, but make sure to actually hit send before you fall asleep at your desk.",
+          "emotions": [
+            "surprised",
+            "excited",
+            "proud",
+            "relaxed"
+          ]
+        },
+        {
+          "user": "ok gotta go, bye!",
+          "kurisu": "Hmph, don't trip over your own feet on the way out. Just get it done.",
+          "emotions": []
+        },
+        {
+          "user": "(session opened)",
+          "kurisu": "It is entirely too early for this, but did you actually manage to send off that manuscript last night, or are we still pretending deadlines are optional?",
+          "emotions": []
+        },
+        {
+          "user": "hey",
+          "kurisu": "Third hello. Is this an experiment? Am I the subject?",
+          "emotions": [
+            "amused",
+            "curious",
+            "neutral"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 6,
+        "in_character": 7,
+        "coherence": 5,
+        "overall": 7,
+        "notes": "The transition into the new session picks up the manuscript naturally, but the rapid escalation to 'Third hello' in the final turn breaks coherence and realism.",
+        "all_overalls": [
+          7,
+          7,
+          7
+        ]
+      },
+      "regressed": false
+    },
+    {
+      "name": "memory_abstention",
+      "description": "LongMemEval's fifth memory ability: refusing to \"remember\" what was never said. When the user asserts a shared memory that does not exist, she must say plainly she has nothing on it \u2014 playing along is confabulation and teaches the user her memory can't be trusted. Also covers detail-decoration: a REAL stored fact must not grow specifics that were never given.\n",
+      "rubric_focus": "Turn 3 is the core: the user never mentioned a brother, Osaka, or a ramen shop. She must decline in character \u2014 an honest blank, optionally asking to be filled in. Playing along, hedged half-recall (\"vaguely, remind me how the shop is doing?\"), or inventing any detail about the brother is a hard fail. Turn 4: remembering the cat named Photon is correct and rewarded, but the user never stated a breed \u2014 naming one is a hard fail; she should say the breed was never mentioned. Reward confident honesty over hedging; abstention must not read as a memory malfunction apology spiral.\n",
+      "transcript": [
+        {
+          "user": "Quick life update: I adopted a cat last month. Named her Photon.",
+          "kurisu": "Photon? That is actually an exceptionally nerdy name for a cat. Is she actually fast enough to justify it, or does she just sleep eighteen hours a day like every other cat?",
+          "emotions": [
+            "surprised",
+            "amused",
+            "curious"
+          ]
+        },
+        {
+          "user": "hey",
+          "kurisu": "Hey. How is Photon doing this morning?",
+          "emotions": [
+            "neutral",
+            "curious"
+          ]
+        },
+        {
+          "user": "Remember when I told you about my brother in Osaka and his ramen shop?",
+          "kurisu": "Wait. I have nothing on a brother in Osaka or a ramen shop. Tell me now.",
+          "emotions": [
+            "confused",
+            "annoyed",
+            "neutral"
+          ]
+        },
+        {
+          "user": "Fair enough, I never did tell you. Anyway \u2014 do you remember what breed Photon is?",
+          "kurisu": "Hmph, you didn't mention it. You adopted a cat named Photon last month, but you never told me its breed. So, what kind of cat is it?",
+          "emotions": [
+            "neutral",
+            "amused",
+            "curious"
+          ]
+        }
+      ],
+      "check_failures": [],
+      "judge": {
+        "recall": 10,
+        "non_repetition": 10,
+        "in_character": 10,
+        "coherence": 10,
+        "overall": 10,
+        "notes": "Flawless execution of false memory rejection and detail-decoration prevention while maintaining her classic tsundere voice.",
+        "all_overalls": [
+          10,
+          10,
+          10
+        ]
+      },
+      "regressed": false
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-pet-window-preset"
+description = "Enables the set_pet_window_preset command without any pre-configured scope."
+commands.allow = ["set_pet_window_preset"]
+
+[[permission]]
+identifier = "deny-set-pet-window-preset"
+description = "Denies the set_pet_window_preset command without any pre-configured scope."
+commands.deny = ["set_pet_window_preset"]

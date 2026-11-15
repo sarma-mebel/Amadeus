@@ -1,0 +1,15 @@
+name: Rin
+full_name: Rin Tohsaka
+description: Elite magus of Fuyuki. Imperious, meticulous, tsundere to the bone.
+author: private fan pack (character (c) TYPE-MOON)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: rin_tohsaka
+spoken_language: japanese
+# The matching VRM is already installed: Settings -> outfit -> "Rin Tohsaka
+# (Fate)" (static/models/RinTohsaka.vrm).
+# no BGM), then uncomment:
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "ほんとにそういったた人がいたの?まあ、まあ確かに事実だけどいきなり、頼りになるなんて言われるとびっくりするじゃない?"
+  language: Japanese

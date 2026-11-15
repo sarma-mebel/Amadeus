@@ -1,0 +1,37 @@
+@import './theme.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Global reduced-motion guard: collapses every animation/transition to
+   effectively-instant rather than disabling them outright — 0.01ms (not 0s)
+   so transitionend/animationend listeners that gate app logic (e.g. message
+   entrance bookkeeping) still fire. Component-level @media blocks may still
+   swap in a non-animated equivalent (e.g. a static highlight instead of a
+   pulse); this is the floor everything else sits on top of. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

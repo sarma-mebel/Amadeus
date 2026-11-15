@@ -1,0 +1,14 @@
+name: Aqua
+full_name: Aqua
+description: Goddess of water, party archpriest, self-proclaimed genius. Useless in exactly the ways that matter least.
+author: private fan pack (character (c) Natsume Akatsuki / KADOKAWA)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: aqua
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Aqua (KonoSuba)"
+# (static/models/Aqua.vrm). Note: her VRM has eye/brow expressions only.
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "女神の私が撤退なんて!準備できたわうわー!待ってー!ねー、まだかしら"
+  language: Japanese

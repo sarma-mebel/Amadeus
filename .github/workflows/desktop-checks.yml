@@ -1,0 +1,103 @@
+name: Desktop checks (self-hosted Windows)
+
+# Deliberately NOT push/PR-triggered. This job needs a self-hosted Windows
+# runner (see docs/self-hosted-runner.md); if that runner is offline, a
+# push-triggered job would just queue forever and never fail cleanly, which
+# would look like a stuck check on every PR. workflow_dispatch lets you run
+# it on demand, and the weekly schedule gives it some ambient coverage
+# without blocking anyone's push.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+
+concurrency:
+  group: desktop-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    runs-on: [self-hosted, windows]
+    defaults:
+      run:
+        # Windows PowerShell 5.1 with an explicit ExecutionPolicy bypass,
+        # not pwsh: the self-hosted runner is a stock Windows box, so
+        # PowerShell 7 isn't installed (`shell: pwsh` fails the whole job
+        # with "command not found") and 5.1's default Restricted policy
+        # refuses the runner's generated step scripts (both validated live
+        # 2026-08-05). The custom shell template keeps the fix in the repo
+        # instead of requiring Set-ExecutionPolicy machine state on every
+        # runner box; every step here is 5.1-compatible.
+        shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain check
+        run: rustc --version; cargo --version
+
+      # tauri-build panics at build-script time if any declared externalBin
+      # or bundle resource path doesn't exist, and three of those are
+      # gitignored build artifacts a fresh checkout never has: the
+      # PyInstaller backend sidecar exe, frontend/dist (the Vite build
+      # output), and models/kurisu_voice_onnx (validated live 2026-08-05 —
+      # each absence fails the build script in turn). cargo check only
+      # needs the paths to EXIST — resources/sidecars are embedded at
+      # bundle time, which this workflow never reaches — so create empty
+      # placeholders when missing, keeping any real artifacts from a prior
+      # local build in this persistent workspace.
+      - name: Placeholder gitignored build inputs for cargo check
+        run: |
+          New-Item -ItemType Directory -Force -Path frontend/src-tauri/binaries | Out-Null
+          New-Item -ItemType Directory -Force -Path frontend/dist | Out-Null
+          New-Item -ItemType Directory -Force -Path models/kurisu_voice_onnx | Out-Null
+          $sidecar = "frontend/src-tauri/binaries/amadeus-backend-x86_64-pc-windows-msvc.exe"
+          if (-not (Test-Path $sidecar)) {
+            Set-Content -Path $sidecar -Value "cargo-check placeholder, never bundled"
+          }
+
+      - name: cargo check (default features)
+        working-directory: frontend/src-tauri
+        run: cargo check
+
+      - name: cargo check (--features qwen)
+        working-directory: frontend/src-tauri
+        run: cargo check --features qwen
+
+      - name: Node toolchain check
+        run: node --version; npm --version
+
+      - name: npm ci
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend tests (native filesystem)
+        working-directory: frontend
+        # Runs on the runner's native Windows filesystem (not a /mnt/c-style
+        # WSL mount), which is the whole point of this job: it exercises the
+        # path that the drop-guard wrapper in docs/dev-setup.md's "known
+        # gotchas" section exists to protect against.
+        run: npm run test:ci
+
+      # The packaged-desktop smoke harness is scripts/smoke_desktop.py: it
+      # boots the built Tauri exe, discovers the backend sidecar's random
+      # port, and checks /healthz, the window, and /api/status (real LLM,
+      # no boot-failure counters). It needs a packaged build at
+      # frontend/src-tauri/target/release/amadeus-desktop.exe, which this
+      # workflow does NOT produce (it only cargo-checks; release builds are
+      # cut locally per docs/desktop-release.md). That target/ dir is
+      # gitignored and self-hosted workspaces persist between runs, so a
+      # prior local build on the runner gets smoked when present; otherwise
+      # skip loudly so the log never reads as coverage that didn't happen.
+      # No --chat here: that flag costs a live LLM call.
+      - name: Packaged desktop smoke test (if a built exe is present)
+        run: |
+          $exe = "frontend/src-tauri/target/release/amadeus-desktop.exe"
+          if (Test-Path $exe) {
+            # --timeout 360 covers GPU-build voice warmup (CPU builds pass
+            # long before the cap; it's a wait ceiling, not a sleep).
+            python scripts/smoke_desktop.py --exe $exe --timeout 360
+          } else {
+            Write-Warning "SKIPPED packaged desktop smoke test: no packaged build to test."
+            Write-Warning "scripts/smoke_desktop.py needs $exe, and this workflow does not build the desktop app (it only runs cargo check)."
+            Write-Warning "To get smoke coverage on this runner, build the app here first (frontend: npm run tauri:build) or run scripts/smoke_desktop.py by hand after a local release build."
+          }

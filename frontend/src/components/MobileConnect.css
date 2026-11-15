@@ -1,0 +1,65 @@
+/* Additions on top of DesktopBackendWait.css for the Android connect gate. */
+
+.mobile-connect .desktop-wait-detail {
+  display: block;
+}
+
+.mobile-connect-copy {
+  max-width: 30rem;
+}
+
+.mobile-connect-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(30rem, 86vw);
+  margin: 18px auto 0;
+}
+
+.mobile-connect-form input {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 16, 28, 0.92);
+  color: #e6edf7;
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+}
+
+.mobile-connect-form input:focus {
+  outline: none;
+  border-color: rgba(239, 71, 111, 0.6);
+  box-shadow: 0 0 0 3px rgba(239, 71, 111, 0.18);
+}
+
+.mobile-connect-form button {
+  padding: 12px 14px;
+  border: 1px solid rgba(239, 71, 111, 0.6);
+  border-radius: 10px;
+  background: rgba(239, 71, 111, 0.16);
+  color: #ffd9e1;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+}
+
+.mobile-connect-form button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mobile-connect-error {
+  color: #ff8a76;
+  max-width: 30rem;
+}
+
+.mobile-connect-hint {
+  opacity: 0.75;
+  max-width: 30rem;
+}
+
+.mobile-connect-hint code {
+  font-size: 11px;
+  word-break: break-all;
+}

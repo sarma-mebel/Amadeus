@@ -1,0 +1,115 @@
+/**
+ * Custom title bar for the Tauri desktop main window (decorations: false).
+ * Owned exclusively by this file — App.css/theme.css stay untouched.
+ * Height is pinned via --titlebar-height so App.tsx's wrapper can reserve
+ * exactly this much space when (and only when) the bar renders.
+ */
+
+/*
+ * Wrapper mounted unconditionally around .app-container in App.tsx.
+ * `<TitleBar />` renders null everywhere except the Tauri desktop main
+ * window, so by default this must be a complete layout no-op (browser,
+ * Android, pet, animlab all keep .app-container's own height:100vh
+ * untouched). `display: contents` drops .app-shell out of the box tree
+ * entirely; the :has() rule below promotes it to a real flex column ONLY
+ * when a .titlebar child actually exists, and only then does
+ * .app-container give up its own height to flex-fill the remainder.
+ * WebView2 (Tauri's Windows runtime) and every evergreen browser support
+ * :has(); if it were ever unsupported the fallback is simply "no title
+ * bar reservation", not a broken layout, since .app-shell still passes
+ * .app-container's own sizing through untouched.
+ */
+.app-shell {
+  display: contents;
+}
+
+.app-shell:has(> .titlebar) {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.app-shell:has(> .titlebar) > .app-container {
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.titlebar {
+  --titlebar-height: 36px;
+  height: var(--titlebar-height);
+  min-height: var(--titlebar-height);
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  background: var(--navy-950);
+  border-bottom: 1px solid var(--surface-alpha-08);
+  user-select: none;
+  /* Sits above every other layer, including the boot screen (--z-boot,
+     the highest rung on theme.css's stacking ladder): DesktopBackendWait
+     renders `.desktop-wait` as position:fixed; inset:0 at --z-boot, which
+     would otherwise visually bury the title bar (and its close button)
+     for the whole time the sidecar is starting. */
+  position: relative;
+  z-index: calc(var(--z-boot, 200) + 1);
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  display: flex;
+  align-items: center;
+  padding-left: 14px;
+  font-family: var(--font-display, inherit);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(249, 250, 251, 0.68));
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: stretch;
+  /* Buttons are NOT draggable: they intentionally omit
+     data-tauri-drag-region so clicks reach React instead of starting a
+     window drag. */
+}
+
+.titlebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: var(--titlebar-height);
+  border: none;
+  background: transparent;
+  color: var(--text-muted, rgba(249, 250, 251, 0.68));
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.titlebar-btn:hover {
+  background: var(--surface-alpha-08);
+  color: var(--text-primary, #f9fafb);
+}
+
+.titlebar-btn:active {
+  background: var(--surface-alpha-12);
+}
+
+.titlebar-btn-close:hover {
+  background: var(--error-400);
+  color: #ffffff;
+}
+
+.titlebar-btn-close:active {
+  background: var(--auburn-600);
+}
+
+.titlebar-btn:focus-visible {
+  outline: 2px solid var(--accent-strong, var(--auburn-400));
+  outline-offset: -2px;
+}

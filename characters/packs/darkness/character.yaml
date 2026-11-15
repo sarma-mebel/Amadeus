@@ -1,0 +1,14 @@
+name: Darkness
+full_name: Lalatina Dustiness Ford
+description: Noble crusader of KonoSuba. Shield of the party — honor-bound, kind-hearted, delighted by hardship.
+author: private fan pack (character (c) Natsume Akatsuki / KADOKAWA)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: darkness
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Darkness (KonoSuba)"
+# (static/models/Darkness.vrm). Note: her VRM has brow-based expressions only.
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "私の働きに不満があるのなら私を口汚くのの知ってくれても構わないのだぞ なんと言う恥ずかしめやはり私の目に狂いはなかったシェロの鍛錬はなかなかに刺激的なんだ"
+  language: Japanese

@@ -1,0 +1,14 @@
+name: Yotsuba
+full_name: Yotsuba Nakano
+description: Fourth Nakano quintuplet. Ribbon, boundless energy, helps everyone; learning to count herself too.
+author: private fan pack (character (c) Negi Haruba / Kodansha)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: yotsuba
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Yotsuba Nakano (Quintuplets)"
+# (static/models/Yotsuba.vrm).
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "お帰りなさーい、お風呂湧いてるのでどうぞーよかったらうちに寄って行きませんか?眠いなら寝ちゃいましょう!明日の準備は終わりましたか?もう寝る時間じゃないですか?"
+  language: Japanese

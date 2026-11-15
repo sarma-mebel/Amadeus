@@ -1,0 +1,144 @@
+/**
+ * Design tokens for the Amadeus chat UI.
+ *
+ * Two-accent system:
+ *  - Signature accent: Kurisu auburn/red — the app's primary "voice"
+ *    (buttons, focus rings, speaking indicator, active states).
+ *  - Secondary warm accent: nixie-tube amber — the Steins;Gate
+ *    divergence-meter glow, used sparingly for background warmth.
+ *
+ * The periwinkle rgba(102,126,234,*) that used to show up on the agent
+ * bubble border, transcript accents, and the selected-agent-pill gradient
+ * has been fully purged from the files this token system covers.
+ *
+ * Time-of-day tint: ChatInterface sets `data-tod` (dawn|day|evening|night)
+ * on the chat root and these tokens shift a few degrees warmer/cooler in
+ * response — see the `[data-tod="…"]` blocks at the bottom. Kept subtle on
+ * purpose (small hue/opacity nudges only).
+ */
+
+:root {
+  /* ---- Stacking scale ----
+     One ladder for every cross-component layer; components must use these
+     instead of literals. Three separate incidents came from ad-hoc values:
+     the header clipping the status popover, the header covering the
+     session drawer, and the popover painting under the transcript.
+       header  < drawer < overlay (modals/slide-overs) < boot screen. */
+  --z-header: 30;
+  --z-popover: 10; /* inside the header's stacking context */
+  --z-drawer: 40;
+  --z-overlay: 60;
+  --z-boot: 200;
+
+  /* ---- Motion scale ----
+     One duration/easing set for every transition and animation; components
+     must use these instead of literals. Same motivation as the z-index
+     ladder above — ad-hoc timings had already drifted (sibling buttons with
+     different hover durations, panels fading in on three different curves).
+       --dur-fast   ~120ms — hovers, toggles, small state flips.
+       --dur-med    ~200ms — panel/popover enter (settings, memory drawer).
+       --dur-slow   ~320ms — drawers/overlays (session sidebar, full-screen
+                    modals) where a larger surface is moving.
+     Easing:
+       --ease-out      cubic-bezier(0.16, 1, 0.3, 1) — default for anything
+                       entering/responding to input; fast start, gentle stop.
+       --ease-in-out   cubic-bezier(0.65, 0, 0.35, 1) — symmetric moves
+                       (value fills, tracked bars) with no clear "arrival".
+       --ease-spring   cubic-bezier(0.34, 1.56, 0.64, 1) — a small overshoot
+                       pop. Small pops ONLY (chips, badges, tiny icons) —
+                       never large surfaces, the overshoot reads as jank at
+                       panel/drawer scale. */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---- Type families ----
+     --font-display: headline/branding surfaces only (app title, section
+       headings) — body copy stays on --font-body so paragraphs don't read
+       in a display face.
+     --font-body: the existing IBM Plex Sans stack (unchanged).
+     --font-jp: Japanese caption lines (.message-japanese and friends) — a
+       real JP webfont instead of falling through to whatever CJK-capable
+       system font happens to be installed. */
+  --font-display: 'Space Grotesk', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'IBM Plex Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-jp: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', Meiryo,
+    sans-serif;
+
+  /* ---- Base navy ladder (existing surfaces, now tokenized) ---- */
+  --navy-950: rgb(6, 10, 20);
+  --navy-900: rgb(9, 13, 22);
+  --navy-800: rgb(16, 23, 39);
+
+  /* ---- White-alpha surface ladder ---- */
+  --surface-alpha-06: rgba(255, 255, 255, 0.06);
+  --surface-alpha-08: rgba(255, 255, 255, 0.08);
+  --surface-alpha-12: rgba(255, 255, 255, 0.12);
+  --surface-alpha-14: rgba(255, 255, 255, 0.14);
+
+  /* ---- Secondary warm accent: nixie amber ---- */
+  --amber-50: #fff4e2;
+  --amber-200: #ffd08a;
+  --amber-400: #ffb75e;
+  --amber-500: #ff9a2e;
+  --amber-600: #e6821c;
+  --amber-rgb: 255, 154, 46;
+
+  /* ---- Signature accent: Kurisu auburn/red ---- */
+  --auburn-300: #d75a65;
+  --auburn-400: #c1444f;
+  --auburn-500: #b23a48;
+  --auburn-600: #8f2331;
+  --auburn-rgb: 193, 68, 79;
+  --auburn-deep-rgb: 143, 35, 49;
+
+  /* Error/muted-red (distinct from auburn identity color, cooler+greyer so
+     error states don't compete visually with Kurisu's accent) */
+  --error-400: #d9534f;
+  --error-rgb: 217, 83, 79;
+
+  /* ---- Semantic aliases used across owned files ---- */
+  --accent: var(--auburn-600);
+  --accent-strong: var(--auburn-400);
+  --accent-soft: rgba(var(--auburn-deep-rgb), 0.22);
+  --accent-border: rgba(var(--auburn-rgb), 0.5);
+
+  --identity-accent: var(--auburn-400);
+  --identity-soft: rgba(var(--auburn-rgb), 0.16);
+  --identity-border: rgba(var(--auburn-rgb), 0.4);
+  --warm-accent: var(--amber-500);
+  --warm-soft: rgba(var(--amber-rgb), 0.12);
+  --warm-border: rgba(var(--amber-rgb), 0.35);
+
+  /* Time-of-day tint variable, re-derived in JS every 10 min and applied via
+     data-tod on the chat root. Defaults to a neutral "day" warmth. */
+  --tod-tint: rgba(var(--amber-rgb), 0.06);
+  --tod-accent-shift: 0deg;
+}
+
+/* Dawn: soft warm amber, slightly softened panel */
+[data-tod='dawn'] {
+  --tod-tint: rgba(255, 189, 130, 0.08);
+  --tod-accent-shift: -4deg;
+}
+
+/* Day: neutral, closest to the base amber */
+[data-tod='day'] {
+  --tod-tint: rgba(var(--amber-rgb), 0.05);
+  --tod-accent-shift: 0deg;
+}
+
+/* Evening: deeper warm tint */
+[data-tod='evening'] {
+  --tod-tint: rgba(255, 140, 66, 0.1);
+  --tod-accent-shift: -6deg;
+}
+
+/* Night: cooler and dimmer — panel should read calmer/less saturated */
+[data-tod='night'] {
+  --tod-tint: rgba(120, 140, 210, 0.07);
+  --tod-accent-shift: 10deg;
+}

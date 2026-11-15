@@ -1,0 +1,106 @@
+{
+  "vrm_version": "1.x",
+  "total_expressions": 14,
+  "expressions": {
+    "happy": {
+      "name": "happy",
+      "preset": "happy",
+      "type": "preset",
+      "is_binary": false
+    },
+    "angry": {
+      "name": "angry",
+      "preset": "angry",
+      "type": "preset",
+      "is_binary": false
+    },
+    "sad": {
+      "name": "sad",
+      "preset": "sad",
+      "type": "preset",
+      "is_binary": false
+    },
+    "relaxed": {
+      "name": "relaxed",
+      "preset": "relaxed",
+      "type": "preset",
+      "is_binary": false
+    },
+    "surprised": {
+      "name": "surprised",
+      "preset": "surprised",
+      "type": "preset",
+      "is_binary": false
+    },
+    "aa": {
+      "name": "aa",
+      "preset": "aa",
+      "type": "preset",
+      "is_binary": false
+    },
+    "ih": {
+      "name": "ih",
+      "preset": "ih",
+      "type": "preset",
+      "is_binary": false
+    },
+    "ou": {
+      "name": "ou",
+      "preset": "ou",
+      "type": "preset",
+      "is_binary": false
+    },
+    "ee": {
+      "name": "ee",
+      "preset": "ee",
+      "type": "preset",
+      "is_binary": false
+    },
+    "oh": {
+      "name": "oh",
+      "preset": "oh",
+      "type": "preset",
+      "is_binary": false
+    },
+    "blink": {
+      "name": "blink",
+      "preset": "blink",
+      "type": "preset",
+      "is_binary": false
+    },
+    "blinkLeft": {
+      "name": "blinkLeft",
+      "preset": "blinkLeft",
+      "type": "preset",
+      "is_binary": false
+    },
+    "blinkRight": {
+      "name": "blinkRight",
+      "preset": "blinkRight",
+      "type": "preset",
+      "is_binary": false
+    },
+    "neutral": {
+      "name": "neutral",
+      "preset": "neutral",
+      "type": "preset",
+      "is_binary": false
+    }
+  },
+  "expression_names": [
+    "happy",
+    "angry",
+    "sad",
+    "relaxed",
+    "surprised",
+    "aa",
+    "ih",
+    "ou",
+    "ee",
+    "oh",
+    "blink",
+    "blinkLeft",
+    "blinkRight",
+    "neutral"
+  ]
+}

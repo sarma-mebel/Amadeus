@@ -1,0 +1,705 @@
+/* Desktop-pet overlay window (?view=pet): everything must sit on a fully
+   transparent page so the OS desktop shows through around the avatar. */
+
+html.pet-mode,
+body.pet-mode,
+.pet-mode #root {
+  background: transparent !important;
+}
+
+.pet-view {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.pet-drag-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: rgba(10, 14, 26, 0.55);
+  border-radius: 10px;
+  margin: 6px 6px 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  cursor: grab;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.pet-view:hover .pet-drag-bar {
+  opacity: 1;
+}
+
+.pet-drag-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: rgba(255, 255, 255, 0.7);
+  user-select: none;
+}
+
+.pet-drag-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pet-drag-actions button {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.pet-drag-actions button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Size preset + DND buttons re-use the plain drag-actions button look but
+   need an "on" state (compact size active / DND active) distinct from
+   hover, matching .pet-toggle.active elsewhere in this file. */
+.pet-drag-actions button.active {
+  background: rgba(6, 214, 160, 0.18);
+  color: rgba(158, 240, 210, 0.95);
+}
+
+.pet-dnd-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.pet-dnd-anchor button.active {
+  background: rgba(150, 150, 160, 0.28);
+  color: rgba(230, 230, 235, 0.95);
+}
+
+/* Inline chooser (feature 1): small popover under the 🔕 button, same dark
+   pill aesthetic as the caption/controls rather than a native <select> —
+   the whole overlay avoids OS-chrome-looking widgets. */
+.pet-dnd-chooser {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 14, 26, 0.92);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.pet-dnd-chooser button {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  text-align: left;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pet-dnd-chooser button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Checked rows in the together chooser (role=menuitemcheckbox): same teal
+   accent as .pet-toggle.active so "this mode is on" reads consistently. */
+.pet-dnd-chooser button.active {
+  background: rgba(6, 214, 160, 0.16);
+  color: rgba(158, 240, 210, 0.95);
+}
+
+/* Shared-activity chooser anchor (controls row): same relative-anchor
+   trick as .pet-dnd-anchor above. */
+.pet-together-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Upward variant for choosers anchored to the BOTTOM controls row (the
+   DND one hangs down from the top drag bar). */
+.pet-dnd-chooser.pet-chooser-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  right: auto;
+  left: 0;
+}
+
+/* Fullscreen-courtesy opt-out row: a checkbox, not a button — it's a
+   toggled preference living inside the DND popover rather than earning its
+   own always-visible control, so it needs to look distinct from the
+   above menuitem buttons (a thin divider + non-button layout). */
+.pet-dnd-chooser-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  padding: 6px 9px 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10.5px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.pet-dnd-chooser-option input[type='checkbox'] {
+  flex-shrink: 0;
+  accent-color: rgba(193, 68, 79, 0.85);
+  cursor: pointer;
+}
+
+.pet-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  /* Stacking context so the mood glow's z-index:-1 stays behind the
+     canvas but inside this window (the page itself is transparent). */
+  z-index: 0;
+  /* Roam glide settle: when a stroll ends the lean eases back upright
+     instead of snapping (the bob animation is simply removed). */
+  transition: transform 600ms ease;
+}
+
+/* Desktop-roaming glide (vrm/petRoam dispatches kurisu-pet-roam-changed):
+   a slight lean INTO the travel direction plus a slow bob while the Rust
+   tween strolls the window. CSS-only on purpose — there is no vetted eager
+   walk clip, and the avatar layer's calm perched stance keeps playing
+   underneath. Rotation rides a custom property so the bob keyframes can
+   re-state it without one class's transform stomping the other's. */
+.pet-stage.roaming-left,
+.pet-stage.roaming-right {
+  animation: pet-roam-bob 1.4s var(--ease-in-out) infinite;
+}
+
+.pet-stage.roaming-left {
+  --pet-roam-lean: -2deg;
+}
+
+.pet-stage.roaming-right {
+  --pet-roam-lean: 2deg;
+}
+
+@keyframes pet-roam-bob {
+  0%,
+  100% {
+    transform: rotate(var(--pet-roam-lean, 0deg)) translateY(0);
+  }
+  50% {
+    transform: rotate(var(--pet-roam-lean, 0deg)) translateY(-4px);
+  }
+}
+
+/* Emotion-tinted ambient aura behind the avatar; only visible while she's
+   thinking/speaking (the .active window PetView drives). */
+.pet-mood-glow {
+  position: absolute;
+  inset: 4% 8% 14%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  --mood-rgb: 215, 90, 101; /* neutral: soft auburn */
+  background: radial-gradient(
+    ellipse 52% 46% at 50% 40%,
+    rgba(var(--mood-rgb), 0.28),
+    transparent 72%
+  );
+  filter: blur(10px);
+}
+
+.pet-mood-glow.active {
+  opacity: 1;
+}
+
+.pet-mood-glow[data-emotion='happy'] {
+  --mood-rgb: 255, 183, 94;
+}
+
+.pet-mood-glow[data-emotion='angry'] {
+  --mood-rgb: 239, 71, 111;
+}
+
+.pet-mood-glow[data-emotion='sad'] {
+  --mood-rgb: 111, 159, 216;
+}
+
+.pet-mood-glow[data-emotion='relaxed'] {
+  --mood-rgb: 143, 217, 168;
+}
+
+.pet-mood-glow[data-emotion='surprised'] {
+  --mood-rgb: 159, 216, 232;
+}
+
+/* The full-app CSS paints gradients behind/over the scene; in the pet
+   window those would show as a dark box. */
+.pet-mode .vrm-panel::before,
+.pet-mode .vrm-stage::before,
+.pet-mode .vrm-stage::after {
+  display: none !important;
+}
+
+.pet-caption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 88px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(193, 68, 79, 0.35);
+  background: rgba(10, 14, 26, 0.82);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12.5px;
+  line-height: 1.5;
+  z-index: 3;
+  max-height: 40vh;
+  overflow-y: auto;
+  animation: pet-caption-in var(--dur-med) var(--ease-out);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.pet-caption.leaving {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* Click-to-pin (3c): a visible ring so "why isn't this fading" has an
+   obvious answer, plus the 📌 rendered inline in JSX. Cursor is scoped to
+   .pet-caption itself, not .pet-sent-echo/.pet-hint — those reuse the
+   pet-caption class for its box styling but aren't click-to-pin targets. */
+.pet-caption.pinned {
+  border-color: rgba(255, 196, 107, 0.55);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 196, 107, 0.25);
+}
+
+.pet-caption:not(.pet-sent-echo):not(.pet-hint) {
+  cursor: pointer;
+}
+
+.pet-caption-pin {
+  margin-right: 5px;
+}
+
+/* Rolling history (3b): revealed only on hover (mounted conditionally in
+   JSX, so no display:none flash needed), dimmer/smaller, oldest-first so it
+   reads top-to-bottom like a mini transcript ending at the live line. */
+.pet-caption-history {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pet-caption-history-line {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pet-hint {
+  bottom: auto;
+  top: 40px;
+  background: rgba(60, 20, 26, 0.85);
+}
+
+/* Sent confirmation: brief echo of what got through (voice or typed).
+   Bluish tint so it never reads as her line. */
+.pet-sent-echo {
+  bottom: auto;
+  top: 40px;
+  border-color: rgba(96, 140, 214, 0.4);
+  background: rgba(14, 22, 40, 0.85);
+  color: rgba(210, 226, 255, 0.92);
+  font-style: italic;
+}
+
+@keyframes pet-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pet-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  z-index: 3;
+}
+
+/* Controls stay visible while engaged (recording / hands-free / busy) so
+   the state is legible without needing to keep the pointer on the window. */
+.pet-view:hover .pet-controls,
+.pet-controls:focus-within,
+.pet-controls.engaged {
+  opacity: 1;
+}
+
+/* Typed input row: same reveal behavior as the controls — hidden until
+   hover/focus so the overlay stays clean. */
+.pet-composer {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  z-index: 3;
+}
+
+.pet-view:hover .pet-composer,
+.pet-composer:focus-within {
+  opacity: 1;
+}
+
+.pet-composer-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 14, 26, 0.7);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-family: inherit;
+  outline: none;
+}
+
+.pet-composer-input:focus {
+  border-color: rgba(193, 68, 79, 0.55);
+}
+
+.pet-composer-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.pet-composer-send {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 14, 26, 0.7);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.pet-composer-send:hover:not(:disabled) {
+  border-color: rgba(193, 68, 79, 0.55);
+}
+
+.pet-composer-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pet-mic,
+.pet-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 14, 26, 0.7);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.pet-toggle {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pet-mic.recording {
+  border-color: rgba(239, 71, 111, 0.8);
+  background: rgba(239, 71, 111, 0.25);
+  box-shadow: 0 0 12px rgba(239, 71, 111, 0.45);
+}
+
+.pet-toggle.active {
+  border-color: rgba(6, 214, 160, 0.7);
+  color: rgba(158, 240, 210, 0.95);
+  box-shadow: 0 0 10px rgba(6, 214, 160, 0.25);
+}
+
+/* Read-together's own active state overrides the shared teal above with
+   the same violet as .pet-reading, so the button and its status chip read
+   as the same mode. */
+.pet-read-toggle.active {
+  border-color: rgba(183, 155, 240, 0.7);
+  color: rgba(216, 200, 250, 0.95);
+  box-shadow: 0 0 10px rgba(183, 155, 240, 0.25);
+}
+
+/* Watch-together's own active state: same treatment as read-together, a
+   distinct cyan (violet is taken by reading, amber by the ambient screen
+   companion, green by voice listening/teal default). */
+.pet-watch-toggle.active {
+  border-color: rgba(90, 200, 230, 0.7);
+  color: rgba(190, 235, 245, 0.95);
+  box-shadow: 0 0 10px rgba(90, 200, 230, 0.25);
+}
+
+.pet-mic:disabled,
+.pet-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pet-busy {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(239, 71, 111, 0.9);
+  animation: pet-busy-pulse 1.2s var(--ease-in-out) infinite;
+}
+
+@keyframes pet-busy-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pet-listening {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: rgba(6, 214, 160, 0.95);
+  border: 1px solid rgba(6, 214, 160, 0.4);
+  background: rgba(10, 14, 26, 0.7);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.pet-listening-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 6px rgba(6, 214, 160, 0.8);
+  animation: pet-busy-pulse 1.2s var(--ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-busy,
+  .pet-listening-dot {
+    animation: none;
+  }
+
+  .pet-caption {
+    animation: none;
+  }
+
+  .pet-toggle.peek-pulse {
+    animation: none;
+    /* Still communicate the moment without motion: a brief solid highlight
+       instead of the glow/scale keyframes below. */
+    background: rgba(255, 196, 107, 0.3);
+  }
+
+  .pet-toggle.page-pulse {
+    animation: none;
+    background: rgba(183, 155, 240, 0.3);
+  }
+
+  .pet-toggle.watch-pulse {
+    animation: none;
+    background: rgba(90, 200, 230, 0.3);
+  }
+}
+
+/* Screen-companion indicator: same chip as LISTENING, amber so "she can
+   see your screen right now" is always visibly distinct. */
+.pet-watching {
+  color: #ffc46b;
+}
+
+.pet-watching .pet-listening-dot {
+  background: #ffc46b;
+}
+
+/* Read-together indicator: same chip family as WATCHING/LISTENING, a soft
+   violet so it reads as its own distinct mode rather than a variant of
+   either (amber = ambient screen glances, green = voice listening). */
+.pet-reading {
+  color: #b79bf0;
+  border-color: rgba(183, 155, 240, 0.4);
+}
+
+.pet-reading .pet-listening-dot {
+  background: #b79bf0;
+  box-shadow: 0 0 6px rgba(183, 155, 240, 0.8);
+}
+
+/* Watch-together indicator: same chip family, a distinct cyan so it's
+   never confused with reading (violet), ambient screen glances (amber), or
+   voice listening (green). */
+.pet-watching-together {
+  color: #5ac8e6;
+  border-color: rgba(90, 200, 230, 0.4);
+}
+
+.pet-watching-together .pet-listening-dot {
+  background: #5ac8e6;
+  box-shadow: 0 0 6px rgba(90, 200, 230, 0.8);
+}
+
+/* Do-not-disturb chip: muted gray, deliberately NOT the teal LISTENING or
+   amber WATCHING color — "quiet" should not look like an active feature. */
+.pet-quiet {
+  color: rgba(200, 200, 208, 0.85);
+  border-color: rgba(200, 200, 208, 0.35);
+}
+
+.pet-quiet .pet-listening-dot {
+  background: rgba(200, 200, 208, 0.85);
+  box-shadow: 0 0 6px rgba(200, 200, 208, 0.5);
+}
+
+/* Volume slider (feature 2): fits the same pill row as mic/hands-free/
+   screen without growing the resting overlay — hidden until hover like the
+   rest of .pet-controls. */
+.pet-volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 14, 26, 0.7);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pet-volume input[type='range'] {
+  width: 64px;
+  accent-color: rgba(193, 68, 79, 0.85);
+  cursor: pointer;
+}
+
+/* Screen-peek pulse (feature 4): amber to match .pet-watching, signaling
+   "a capture just happened" independent of whether she ends up commenting —
+   the honesty point is the capture, not the line. */
+.pet-toggle.peek-pulse {
+  animation: pet-peek-pulse 1.5s var(--ease-out);
+}
+
+@keyframes pet-peek-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 196, 107, 0);
+    transform: scale(1);
+  }
+  30% {
+    box-shadow: 0 0 14px rgba(255, 196, 107, 0.65);
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 196, 107, 0);
+    transform: scale(1);
+  }
+}
+
+/* Read-together page pulse: same shape as the screen-peek pulse, violet to
+   match .pet-reading/.pet-read-toggle.active — fires whenever a page is
+   actually POSTed (not on every locally-detected-but-skipped turn). */
+.pet-toggle.page-pulse {
+  animation: pet-page-pulse 1.5s var(--ease-out);
+}
+
+@keyframes pet-page-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(183, 155, 240, 0);
+    transform: scale(1);
+  }
+  30% {
+    box-shadow: 0 0 14px rgba(183, 155, 240, 0.65);
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(183, 155, 240, 0);
+    transform: scale(1);
+  }
+}
+
+/* Watch-together frame pulse: same shape again, cyan to match
+   .pet-watching-together/.pet-watch-toggle.active — fires whenever a
+   frame is actually POSTed (not on every sampled-but-skipped-as-static
+   tick). */
+.pet-toggle.watch-pulse {
+  animation: pet-watch-pulse 1.5s var(--ease-out);
+}
+
+@keyframes pet-watch-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(90, 200, 230, 0);
+    transform: scale(1);
+  }
+  30% {
+    box-shadow: 0 0 14px rgba(90, 200, 230, 0.65);
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(90, 200, 230, 0);
+    transform: scale(1);
+  }
+}
+
+/* Tucked-away overlay (vrm/petTuck): the whole window becomes one
+   "bring her back" affordance while she's parked off-screen. Transparent —
+   the visible sliver of the avatar is the affordance; the cursor hint is
+   the only visual change. */
+.pet-tucked-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  cursor: pointer;
+  background: transparent;
+}

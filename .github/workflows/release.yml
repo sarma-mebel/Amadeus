@@ -1,0 +1,695 @@
+name: Release Desktop (Windows)
+
+# Windows jobs run on the self-hosted runner (docs/self-hosted-runner.md) -
+# the same machine that used to cut these releases by hand, so it has the
+# toolchains, the GPU, the HF model cache, and the signing key. The hosted
+# windows-latest era of this workflow is in git history; it was disabled
+# during the Actions-billing outage and the manual flow it documented in
+# docs/desktop-release.md is what these jobs now automate.
+#
+# Runner facts this workflow depends on (all validated live 2026-08-05 on
+# desktop-checks.yml, same runner):
+# - No PowerShell 7 → `shell: powershell` with an -ExecutionPolicy Bypass
+#   template (5.1's Restricted default refuses generated step scripts).
+# - Toolchains come from the machine (rustup/node/py launcher on the
+#   runner user's PATH) - no setup-* actions.
+# - Single runner → jobs queue and run one at a time; that's fine, a
+#   release is not latency-sensitive. timeout-minutes guards every job so
+#   a wedged interactive prompt can't occupy the runner for 24h (the
+#   signing-password prompt has hung a build before - see
+#   docs/desktop-release.md "Auto-updater").
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      include_gpu:
+        description: "Also build the GPU artifacts (slim installer + full portable 7z)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The installer takes its version from tauri.conf.json while the backend
+      # reports pyproject's; v0.11.0 once shipped an installer named 0.10.0
+      # because only pyproject was bumped. Fail fast on any drift.
+      - name: Check version sync (tag vs pyproject vs tauri.conf)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $Tag = "${{ github.ref_name }}".TrimStart("v")
+          $Py = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          $Tauri = (Get-Content frontend/src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $Init = (Select-String -Path amadeus/__init__.py -Pattern '^__version__ = "(.+)"').Matches[0].Groups[1].Value
+          Write-Output "tag=$Tag pyproject=$Py tauri=$Tauri __init__=$Init"
+          if ($Py -ne $Tag -or $Tauri -ne $Tag -or $Init -ne $Tag) {
+              throw "Version drift: tag v$Tag, pyproject $Py, tauri.conf.json $Tauri, amadeus/__init__.py $Init. Bump them to match before tagging."
+          }
+
+      - name: Toolchain check
+        run: |
+          rustc --version; cargo --version
+          node --version; npm --version
+          py -3.11 --version
+
+      # The runner process can hold a PATH snapshot that predates the
+      # GitHub CLI's MSI install (validated live 2026-08-05: gh resolved in
+      # fresh logon shells but not in the long-lived runner session), so
+      # put the install dir on the step PATH explicitly.
+      - name: Ensure GitHub CLI on PATH
+        run: |
+          if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+              if (-not (Test-Path "C:\Program Files\GitHub CLI\gh.exe")) {
+                  throw "GitHub CLI not found - install it on the runner machine (winget install GitHub.cli)."
+              }
+              Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files\GitHub CLI"
+          }
+
+      # Prefer the repo secret; fall back to the dev machine's key file
+      # (tauri accepts a path or the key content in the same var). Fail
+      # loudly rather than building unsigned - an unsigned build produces
+      # no .sig and the manifest step would fail later anyway, further from
+      # the cause. LOSING THIS KEY = every install reinstalls by hand once;
+      # backup notes in docs/desktop-release.md.
+      - name: Resolve updater signing key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+              Add-Content -Path $env:GITHUB_ENV -Value "TAURI_SIGNING_PRIVATE_KEY=$env:TAURI_SIGNING_PRIVATE_KEY"
+              Write-Host "Using signing key from repository secret."
+          } else {
+              $Fallback = "$env:GITHUB_WORKSPACE\local-assets\updater-keys\amadeus_updater.key"
+              if (-not (Test-Path -LiteralPath $Fallback)) {
+                  throw "No signing key: set the TAURI_SIGNING_PRIVATE_KEY repo secret or keep the key at $Fallback"
+              }
+              Add-Content -Path $env:GITHUB_ENV -Value "TAURI_SIGNING_PRIVATE_KEY=$Fallback"
+              Write-Host "Using signing key from the local dev-machine path."
+          }
+
+      - name: Fetch runtime assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $AssetZip = "amadeus-runtime-assets.zip"
+          gh release download assets-v1 --repo "${{ github.repository }}" --pattern $AssetZip --clobber --dir .
+          if (-not (Test-Path -LiteralPath $AssetZip)) {
+              throw "Runtime asset '$AssetZip' was not downloaded from GitHub Release 'assets-v1'. Confirm the release contains an asset with that exact name."
+          }
+          Expand-Archive -Path $AssetZip -DestinationPath . -Force
+          Remove-Item -Force $AssetZip
+
+      - name: Build backend sidecar
+        run: powershell -ExecutionPolicy Bypass -File scripts/package_backend_windows.ps1 -SkipAssetFetch -IncludeSTT
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # The node wrapper hands the build an EMPTY
+      # TAURI_SIGNING_PRIVATE_KEY_PASSWORD - the only reliable way on
+      # Windows (shell empty-var assignment DELETES the var and the CLI then
+      # prompts interactively after makensis, hanging the build; cost an
+      # hour on v0.15.0).
+      - name: Build Tauri desktop app (signed)
+        working-directory: frontend
+        run: node ..\scripts\win_empty_signing_password.cjs npm run tauri:build
+
+      - name: Assemble portable zip
+        run: |
+          $RepoRoot = Resolve-Path "."
+          $TauriDir = Join-Path $RepoRoot "frontend\src-tauri"
+          $PortableDir = Join-Path $RepoRoot "dist-desktop\portable"
+          $PortableZip = Join-Path $RepoRoot "dist-desktop\Amadeus-Kurisu-portable-windows.zip"
+
+          Remove-Item -Recurse -Force $PortableDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $PortableDir | Out-Null
+
+          $ReleaseRoot = Join-Path $TauriDir "target\release"
+          $ReleaseExe = Join-Path $ReleaseRoot "amadeus-desktop.exe"
+          if (Test-Path $ReleaseExe) {
+              Copy-Item -Force $ReleaseExe (Join-Path $PortableDir "Amadeus Kurisu.exe")
+          }
+
+          $portableEntries = @("amadeus-backend.exe", "frontend", "static", "assets", "models")
+          foreach ($entry in $portableEntries) {
+              $source = Join-Path $ReleaseRoot $entry
+              if (Test-Path $source) {
+                  Copy-Item -Recurse -Force $source (Join-Path $PortableDir $entry)
+              }
+          }
+
+          # portable.marker keeps the in-app NSIS auto-updater OFF for this
+          # copy (it would install into Program Files and leave the portable
+          # dir stale); portable users get the releases-page nudge instead.
+          Set-Content -Path (Join-Path $PortableDir "portable.marker") -Value "portable build - in-app auto-update disabled"
+
+          Remove-Item -Force $PortableZip -ErrorAction SilentlyContinue
+          Compress-Archive -Path (Join-Path $PortableDir "*") -DestinationPath $PortableZip
+
+          $installer = Get-ChildItem -Path (Join-Path $TauriDir "target\release\bundle\nsis") -Filter "*-setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $installer) {
+              throw "NSIS installer not found under frontend\src-tauri\target\release\bundle\nsis"
+          }
+
+          Add-Content -Path $env:GITHUB_ENV -Value "INSTALLER_PATH=$($installer.FullName)"
+          Add-Content -Path $env:GITHUB_ENV -Value "PORTABLE_ZIP_PATH=$PortableZip"
+
+      - name: Verify portable zip contents
+        run: |
+          $PortableDir = Join-Path (Resolve-Path ".") "dist-desktop\portable"
+          $required = @(
+              "amadeus-backend.exe",
+              "frontend\dist\index.html",
+              "static",
+              "assets"
+          )
+          $missing = @()
+          foreach ($entry in $required) {
+              if (-not (Test-Path (Join-Path $PortableDir $entry))) {
+                  $missing += $entry
+              }
+          }
+          if ($missing) {
+              throw "Portable zip is missing required entries: $($missing -join ', ')"
+          }
+          Write-Host "Portable zip manifest OK: $($required -join ', ')"
+
+      - name: Smoke test backend sidecar
+        run: |
+          $PortableDir = Join-Path (Resolve-Path ".") "dist-desktop\portable"
+          $ExePath = Join-Path $PortableDir "amadeus-backend.exe"
+          $AppDataDir = Join-Path $PortableDir "_smoketest-appdata"
+          New-Item -ItemType Directory -Force -Path $AppDataDir | Out-Null
+
+          # Fixed, unlikely-to-collide port for this isolated job (not the
+          # portpicker-chosen port real Tauri launches use). The dev machine
+          # may have a live backend on 8000; 58231 stays clear of it.
+          $Port = 58231
+          $ConfigPath = Join-Path $AppDataDir "config.yaml"
+
+          $sidecarArgs = @(
+              "--host", "127.0.0.1",
+              "--port", "$Port",
+              "--config", $ConfigPath,
+              "--frontend-dir", (Join-Path $PortableDir "frontend\dist"),
+              "--static-dir", (Join-Path $PortableDir "static"),
+              "--resources-dir", $PortableDir,
+              "--app-data-dir", $AppDataDir,
+              "--write-default-config"
+          )
+
+          Write-Host "Launching $ExePath $($sidecarArgs -join ' ')"
+          $proc = Start-Process -FilePath $ExePath -ArgumentList $sidecarArgs -PassThru -NoNewWindow `
+              -RedirectStandardOutput (Join-Path $AppDataDir "stdout.log") `
+              -RedirectStandardError (Join-Path $AppDataDir "stderr.log")
+
+          $healthy = $false
+          $deadline = (Get-Date).AddSeconds(120)
+          try {
+              while ((Get-Date) -lt $deadline) {
+                  if ($proc.HasExited) {
+                      throw "amadeus-backend.exe exited early with code $($proc.ExitCode) before healthz answered."
+                  }
+                  try {
+                      $response = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/healthz" -UseBasicParsing -TimeoutSec 5
+                      if ($response.StatusCode -eq 200) {
+                          Write-Host "healthz responded 200 after boot: $($response.Content)"
+                          $healthy = $true
+                          break
+                      }
+                  } catch {
+                      # Not up yet (connection refused / reset) - keep polling.
+                  }
+                  Start-Sleep -Seconds 2
+              }
+          } finally {
+              if (-not $proc.HasExited) {
+                  Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+                  $proc.WaitForExit(10000) | Out-Null
+              }
+          }
+
+          if (-not $healthy) {
+              Write-Host "----- stdout -----"
+              Get-Content (Join-Path $AppDataDir "stdout.log") -ErrorAction SilentlyContinue
+              Write-Host "----- stderr -----"
+              Get-Content (Join-Path $AppDataDir "stderr.log") -ErrorAction SilentlyContinue
+              throw "amadeus-backend.exe never answered http://127.0.0.1:$Port/healthz with HTTP 200 within 120s."
+          }
+
+          Remove-Item -Recurse -Force $AppDataDir -ErrorAction SilentlyContinue
+
+      # Uploads the STAGED rename-proof copies make_update_manifest.py
+      # writes to dist-desktop/release-assets - never the original
+      # spaced filename: GitHub rewrites spaces to dots on upload, which
+      # 404s the manifest URL (bitten live on v0.15.0).
+      - name: Upload release assets
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+              $NotesFile = "docs/releases/$env:GITHUB_REF_NAME.md"
+              if (Test-Path $NotesFile) {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --notes-file $NotesFile
+              } else {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --generate-notes
+              }
+          }
+          py -3.11 scripts/make_update_manifest.py --tag "$env:GITHUB_REF_NAME" --output latest.json
+          if ($LASTEXITCODE -ne 0) { throw "make_update_manifest.py failed" }
+          $staged = Get-ChildItem "dist-desktop\release-assets" -Filter "*-setup.exe*" | ForEach-Object { $_.FullName }
+          if (-not $staged) { throw "No staged installer copies under dist-desktop\release-assets" }
+          gh release upload "$env:GITHUB_REF_NAME" latest.json "$env:PORTABLE_ZIP_PATH" @staged --repo "${{ github.repository }}" --clobber
+
+      - name: Upload build artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amadeus-desktop-windows
+          path: |
+            ${{ env.INSTALLER_PATH }}
+            ${{ env.PORTABLE_ZIP_PATH }}
+
+  # Slim GPU installer: the auto-updatable GPU channel (latest-gpu.json).
+  # Ships the CPU-sized sidecar + qwen-feature shell; the CUDA runtime pack
+  # arrives on the user's first launch from the gpu-runtime-v2 release
+  # (which is republished only when the torch/qwen dependency set changes -
+  # NOT part of this workflow). Flow mirrors docs/desktop-release.md
+  # "First slim GPU release checklist" steps 5-7.
+  build-windows-gpu-slim:
+    if: github.event_name == 'push' || inputs.include_gpu
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The runner process can hold a PATH snapshot that predates the
+      # GitHub CLI's MSI install (validated live 2026-08-05: gh resolved in
+      # fresh logon shells but not in the long-lived runner session), so
+      # put the install dir on the step PATH explicitly.
+      - name: Ensure GitHub CLI on PATH
+        run: |
+          if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+              if (-not (Test-Path "C:\Program Files\GitHub CLI\gh.exe")) {
+                  throw "GitHub CLI not found - install it on the runner machine (winget install GitHub.cli)."
+              }
+              Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files\GitHub CLI"
+          }
+
+      - name: Resolve updater signing key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+              Add-Content -Path $env:GITHUB_ENV -Value "TAURI_SIGNING_PRIVATE_KEY=$env:TAURI_SIGNING_PRIVATE_KEY"
+          } else {
+              $Fallback = "$env:GITHUB_WORKSPACE\local-assets\updater-keys\amadeus_updater.key"
+              if (-not (Test-Path -LiteralPath $Fallback)) {
+                  throw "No signing key: set the TAURI_SIGNING_PRIVATE_KEY repo secret or keep the key at $Fallback"
+              }
+              Add-Content -Path $env:GITHUB_ENV -Value "TAURI_SIGNING_PRIVATE_KEY=$Fallback"
+          }
+
+      - name: Fetch runtime assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $AssetZip = "amadeus-runtime-assets.zip"
+          gh release download assets-v1 --repo "${{ github.repository }}" --pattern $AssetZip --clobber --dir .
+          if (-not (Test-Path -LiteralPath $AssetZip)) {
+              throw "Runtime asset '$AssetZip' was not downloaded from GitHub Release 'assets-v1'."
+          }
+          Expand-Archive -Path $AssetZip -DestinationPath . -Force
+          Remove-Item -Force $AssetZip
+          if (-not (Test-Path -LiteralPath "models/kurisu_voice_qwen/kurisu_ref.wav")) {
+              throw "assets-v1 is missing models/kurisu_voice_qwen/kurisu_ref.wav - the slim GPU build ships the Qwen3 reference clip."
+          }
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # package_desktop_windows.ps1 -GpuSlim builds the CPU sidecar itself
+      # and runs the gpuslim tauri build (tauri.gpuslim.conf.json - its own
+      # updater endpoint so the two channels never cross-offer). The node
+      # wrapper supplies the empty signing password, same as the CPU job.
+      - name: Build slim GPU installer (signed)
+        run: node scripts\win_empty_signing_password.cjs powershell -ExecutionPolicy Bypass -File scripts\package_desktop_windows.ps1 -GpuSlim -SkipAssetFetch
+
+      - name: Upload release assets (slim GPU)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+              $NotesFile = "docs/releases/$env:GITHUB_REF_NAME.md"
+              if (Test-Path $NotesFile) {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --notes-file $NotesFile
+              } else {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --generate-notes
+              }
+          }
+          py -3.11 scripts/make_update_manifest.py --tag "$env:GITHUB_REF_NAME" --variant gpu --output latest-gpu.json
+          if ($LASTEXITCODE -ne 0) { throw "make_update_manifest.py --variant gpu failed" }
+          $staged = Get-ChildItem "dist-desktop\release-assets" -Filter "*GPU*-setup.exe*" | ForEach-Object { $_.FullName }
+          if (-not $staged) { throw "No staged slim GPU installer copies under dist-desktop\release-assets" }
+          gh release upload "$env:GITHUB_REF_NAME" latest-gpu.json @staged --repo "${{ github.repository }}" --clobber
+
+      # Dispatch runs never execute the staging step (it needs a real tag
+      # for the manifest), so point at the NSIS bundle output directly.
+      # Each job starts from a cleaned workspace, so only this job's own
+      # installer can match the glob.
+      - name: Upload build artifacts (slim GPU)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amadeus-desktop-windows-gpu-slim
+          path: frontend/src-tauri/target/release/bundle/nsis/*-setup.exe*
+
+  # Full GPU portable: ~3.2GB CUDA-torch-bundled offline artifact, split 7z
+  # (NSIS can't mmap the CUDA DLLs and GitHub caps assets at 2GiB - the
+  # full investigation is in docs/desktop-release.md; nobody re-litigates
+  # it). This runner HAS an NVIDIA GPU, so unlike the hosted era the boot
+  # smoke exercises the real CUDA path when the qwen weights are in the
+  # machine's HF cache.
+  build-windows-gpu:
+    if: github.event_name == 'push' || inputs.include_gpu
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: powershell -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure GitHub CLI on PATH
+        run: |
+          if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+              if (-not (Test-Path "C:\Program Files\GitHub CLI\gh.exe")) {
+                  throw "GitHub CLI not found - install it on the runner machine (winget install GitHub.cli)."
+              }
+              Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files\GitHub CLI"
+          }
+
+      # SoX comes from the machine, not choco: prefer a preset SOX_DIR
+      # machine env, else resolve the real payload dir behind whatever
+      # sox.exe is on PATH. Never bundle chocolatey PATH shims - they exit
+      # -1 on user machines (v0.8.3 shipped that way and silently fell back
+      # to the ONNX voice), hence the DLL-siblings sanity check.
+      - name: Resolve SoX
+        run: |
+          if ($env:SOX_DIR -and (Test-Path (Join-Path $env:SOX_DIR "sox.exe"))) {
+              Write-Host "Using machine SOX_DIR=$env:SOX_DIR"
+          } else {
+              $cmd = Get-Command sox.exe -ErrorAction SilentlyContinue
+              if (-not $cmd) {
+                  throw "sox.exe not found: set a machine-level SOX_DIR env var or put the real SoX payload dir on PATH."
+              }
+              $dir = Split-Path $cmd.Source -Parent
+              if ($env:ChocolateyInstall -and (Test-Path "$env:ChocolateyInstall\lib\sox.portable")) {
+                  $real = Get-ChildItem "$env:ChocolateyInstall\lib\sox.portable" -Recurse -Filter sox.exe | Select-Object -First 1
+                  if ($real) { $dir = Split-Path $real.FullName -Parent }
+              }
+              if (-not (Get-ChildItem -Path $dir -Filter *.dll -File -ErrorAction SilentlyContinue)) {
+                  throw "No DLLs next to sox.exe in $dir - this looks like a shim dir, not the real SoX payload."
+              }
+              Add-Content -Path $env:GITHUB_ENV -Value "SOX_DIR=$dir"
+              Write-Host "Resolved SOX_DIR=$dir"
+          }
+
+      - name: Fetch runtime assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $AssetZip = "amadeus-runtime-assets.zip"
+          gh release download assets-v1 --repo "${{ github.repository }}" --pattern $AssetZip --clobber --dir .
+          if (-not (Test-Path -LiteralPath $AssetZip)) {
+              throw "Runtime asset '$AssetZip' was not downloaded from GitHub Release 'assets-v1'."
+          }
+          Expand-Archive -Path $AssetZip -DestinationPath . -Force
+          Remove-Item -Force $AssetZip
+          if (-not (Test-Path -LiteralPath "models/kurisu_voice_qwen/kurisu_ref.wav")) {
+              throw "assets-v1 is missing models/kurisu_voice_qwen/kurisu_ref.wav - the GPU build needs the Qwen3 reference clip."
+          }
+
+      - name: Build backend sidecar (GPU)
+        run: powershell -ExecutionPolicy Bypass -File scripts/package_backend_windows.ps1 -Gpu -SkipAssetFetch -IncludeSTT
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Tauri desktop app (GPU, no-bundle)
+        working-directory: frontend
+        run: npm run tauri:build:gpu:nobundle
+
+      - name: Assemble portable zip (GPU)
+        run: |
+          $RepoRoot = Resolve-Path "."
+          $TauriDir = Join-Path $RepoRoot "frontend\src-tauri"
+          $PortableDir = Join-Path $RepoRoot "dist-desktop\portable-gpu"
+
+          Remove-Item -Recurse -Force $PortableDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $PortableDir | Out-Null
+
+          # Mirror scripts/package_desktop_windows.ps1 -Gpu: Tauri shell exe +
+          # the onedir backend (staged at $TauriDir\amadeus-backend by
+          # package_backend_windows.ps1 -Gpu) + runtime resources from the repo.
+          $ReleaseRoot = Join-Path $TauriDir "target\release"
+          $ReleaseExe = Join-Path $ReleaseRoot "amadeus-desktop.exe"
+          if (-not (Test-Path $ReleaseExe)) {
+              throw "GPU shell exe not found at $ReleaseExe (did tauri build --no-bundle succeed?)."
+          }
+          Copy-Item -Force $ReleaseExe (Join-Path $PortableDir "Amadeus Kurisu (GPU).exe")
+
+          # Same portable.marker as the CPU zip: the NSIS auto-updater must
+          # never run for a portable copy (and doubly so for the GPU build -
+          # the CPU installer it would fetch silently downgrades the voice).
+          Set-Content -Path (Join-Path $PortableDir "portable.marker") -Value "portable build - in-app auto-update disabled"
+
+          $backendOneDir = Join-Path $TauriDir "amadeus-backend"
+          if (-not (Test-Path (Join-Path $backendOneDir "amadeus-backend.exe"))) {
+              throw "GPU onedir backend not found at $backendOneDir (package_backend_windows.ps1 -Gpu must run first)."
+          }
+          Copy-Item -Recurse -Force $backendOneDir (Join-Path $PortableDir "amadeus-backend")
+
+          Copy-Item -Recurse -Force (Join-Path $RepoRoot "frontend\dist") (Join-Path $PortableDir "frontend\dist")
+          foreach ($res in @("static", "assets")) {
+              Copy-Item -Recurse -Force (Join-Path $RepoRoot $res) (Join-Path $PortableDir $res)
+          }
+          New-Item -ItemType Directory -Force -Path (Join-Path $PortableDir "models") | Out-Null
+          foreach ($m in @("kurisu_voice_onnx", "kurisu_voice_qwen")) {
+              $src = Join-Path $RepoRoot "models\$m"
+              if (Test-Path $src) { Copy-Item -Recurse -Force $src (Join-Path $PortableDir "models\$m") }
+          }
+
+          # GitHub release assets are hard-capped at 2 GiB and the GPU zip is
+          # ~3.2 GB (CUDA torch), so produce split 7z volumes instead of one
+          # zip. Extraction: select all .7z.* parts -> 7-Zip -> Extract here
+          # (7-Zip joins the volumes automatically from .001).
+          # 7-Zip does not add itself to PATH (hosted runners pre-add it;
+          # a stock machine install lives at C:\Program Files\7-Zip).
+          $SevenZip = "7z"
+          if (-not (Get-Command 7z -ErrorAction SilentlyContinue)) {
+              $SevenZip = "C:\Program Files\7-Zip\7z.exe"
+              if (-not (Test-Path -LiteralPath $SevenZip)) {
+                  throw "7z not found: install 7-Zip on the runner machine or put it on PATH."
+              }
+          }
+          $SplitBase = Join-Path $RepoRoot "dist-desktop\Amadeus-Kurisu-GPU-portable-windows.7z"
+          Get-ChildItem -Path (Join-Path $RepoRoot "dist-desktop") -Filter "Amadeus-Kurisu-GPU-portable-windows.7z.*" -ErrorAction SilentlyContinue | Remove-Item -Force
+          & $SevenZip a -t7z -mx=3 "-v1900m" $SplitBase (Join-Path $PortableDir "*")
+          if ($LASTEXITCODE -ne 0) { throw "7z split archive creation failed with exit code $LASTEXITCODE" }
+          $parts = Get-ChildItem -Path (Join-Path $RepoRoot "dist-desktop") -Filter "Amadeus-Kurisu-GPU-portable-windows.7z.*" | Sort-Object Name
+          if (-not $parts) { throw "7z produced no volume parts" }
+          $partPaths = ($parts | ForEach-Object { $_.FullName }) -join ";"
+          Add-Content -Path $env:GITHUB_ENV -Value "GPU_PORTABLE_PARTS=$partPaths"
+
+      - name: Verify portable-gpu contents
+        run: |
+          $PortableDir = Join-Path (Resolve-Path ".") "dist-desktop\portable-gpu"
+          $required = @(
+              "amadeus-backend\amadeus-backend.exe",
+              "frontend\dist\index.html",
+              "static",
+              "assets"
+          )
+          $missing = @()
+          foreach ($entry in $required) {
+              if (-not (Test-Path (Join-Path $PortableDir $entry))) {
+                  $missing += $entry
+              }
+          }
+          if ($missing) {
+              throw "GPU portable payload is missing required entries: $($missing -join ', ')"
+          }
+          Write-Host "GPU portable manifest OK: $($required -join ', ')"
+
+      - name: Smoke test backend sidecar (GPU build)
+        run: |
+          # On this runner the smoke may exercise the real CUDA path (the
+          # machine has an NVIDIA GPU and usually a warm HF cache); on a
+          # cold cache the sidecar still boots in the ONNX voice and
+          # /healthz answers, so the timeout stays modest.
+          $PortableDir = Join-Path (Resolve-Path ".") "dist-desktop\portable-gpu"
+          $ExePath = Join-Path $PortableDir "amadeus-backend\amadeus-backend.exe"
+          $AppDataDir = Join-Path $PortableDir "_smoketest-appdata"
+          New-Item -ItemType Directory -Force -Path $AppDataDir | Out-Null
+
+          $Port = 58232
+          $ConfigPath = Join-Path $AppDataDir "config.yaml"
+
+          $sidecarArgs = @(
+              "--host", "127.0.0.1",
+              "--port", "$Port",
+              "--config", $ConfigPath,
+              "--frontend-dir", (Join-Path $PortableDir "frontend\dist"),
+              "--static-dir", (Join-Path $PortableDir "static"),
+              "--resources-dir", $PortableDir,
+              "--app-data-dir", $AppDataDir,
+              "--write-default-config"
+          )
+
+          Write-Host "Launching $ExePath $($sidecarArgs -join ' ')"
+          $proc = Start-Process -FilePath $ExePath -ArgumentList $sidecarArgs -PassThru -NoNewWindow `
+              -RedirectStandardOutput (Join-Path $AppDataDir "stdout.log") `
+              -RedirectStandardError (Join-Path $AppDataDir "stderr.log")
+
+          $healthy = $false
+          $deadline = (Get-Date).AddSeconds(180)
+          try {
+              while ((Get-Date) -lt $deadline) {
+                  if ($proc.HasExited) {
+                      throw "amadeus-backend.exe (GPU) exited early with code $($proc.ExitCode) before healthz answered."
+                  }
+                  try {
+                      $response = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/healthz" -UseBasicParsing -TimeoutSec 5
+                      if ($response.StatusCode -eq 200) {
+                          Write-Host "healthz responded 200 after boot: $($response.Content)"
+                          $healthy = $true
+                          break
+                      }
+                  } catch {
+                      # Not up yet (connection refused / reset) - keep polling.
+                  }
+                  Start-Sleep -Seconds 2
+              }
+          } finally {
+              if (-not $proc.HasExited) {
+                  Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+                  $proc.WaitForExit(10000) | Out-Null
+              }
+          }
+
+          if (-not $healthy) {
+              Write-Host "----- stdout -----"
+              Get-Content (Join-Path $AppDataDir "stdout.log") -ErrorAction SilentlyContinue
+              Write-Host "----- stderr -----"
+              Get-Content (Join-Path $AppDataDir "stderr.log") -ErrorAction SilentlyContinue
+              throw "amadeus-backend.exe (GPU) never answered http://127.0.0.1:$Port/healthz with HTTP 200 within 180s."
+          }
+
+          Remove-Item -Recurse -Force $AppDataDir -ErrorAction SilentlyContinue
+
+      - name: Upload release assets (GPU)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+              $NotesFile = "docs/releases/$env:GITHUB_REF_NAME.md"
+              if (Test-Path $NotesFile) {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --notes-file $NotesFile
+              } else {
+                  gh release create "$env:GITHUB_REF_NAME" --repo "${{ github.repository }}" --title "$env:GITHUB_REF_NAME" --generate-notes
+              }
+          }
+          $parts = $env:GPU_PORTABLE_PARTS -split ";"
+          gh release upload "$env:GITHUB_REF_NAME" @parts --repo "${{ github.repository }}" --clobber
+
+      # NOT uploaded as a dispatch artifact: the split 7z is ~3.2GB and
+      # dispatch runs are shakedowns - inspect dist-desktop/ on the runner
+      # machine instead.
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build web bundle and sync
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      # Debug-signed APK: installable by sideload (Settings > install unknown
+      # apps). Play-store signing is future work; see docs/android.md.
+      - name: Build APK
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk Amadeus-Kurisu-android.apk
+
+      - name: Upload release asset
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if [ -f "docs/releases/$GITHUB_REF_NAME.md" ]; then
+              gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md"
+            else
+              gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+            fi
+          fi
+          gh release upload "$GITHUB_REF_NAME" Amadeus-Kurisu-android.apk --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Upload build artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amadeus-android
+          path: Amadeus-Kurisu-android.apk

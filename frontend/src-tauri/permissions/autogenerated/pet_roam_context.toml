@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pet-roam-context"
+description = "Enables the pet_roam_context command without any pre-configured scope."
+commands.allow = ["pet_roam_context"]
+
+[[permission]]
+identifier = "deny-pet-roam-context"
+description = "Denies the pet_roam_context command without any pre-configured scope."
+commands.deny = ["pet_roam_context"]

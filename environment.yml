@@ -1,0 +1,99 @@
+# Conda environment for Amadeus backend development.
+#
+# This is written by hand, not `conda env export` (that command dumps every
+# resolved conda package plus platform-specific build strings and is noisy
+# and non-portable across OSes). It only pins what actually needs pinning at
+# the conda level (Python) and defers everything else to pip, per
+# requirements-lock.txt and pyproject.toml.
+#
+# Usage:
+#   conda env create -f environment.yml
+#   conda activate amadeus
+#   pip install -e ".[web]"   # add other extras as needed: voice/openai/gemini/memory/search/qwen-tts
+#
+# requirements-lock.txt is a WORKING-STATE SNAPSHOT (pip freeze from the
+# real dev env), not a minimal set — see its header. It is useful for
+# diffing against a fresh install to catch drift, and the pip section below
+# points at it for that purpose. For a normal fresh setup, prefer
+# `pip install -e ".[extras]"` from pyproject.toml, then consult the pins
+# and comments below for the handful of dependencies that have caused real
+# breakage in this project's history.
+name: amadeus
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      # Reference only — see docs/dev-setup.md for why this isn't the
+      # primary install path (the amadeus_kurisu self-install line inside
+      # it is not portable; strip it or use it for diffing, not installing).
+      # - -r requirements-lock.txt
+
+      # ---------------------------------------------------------------
+      # Scar-tissue pins (verified project history — read before bumping)
+      # ---------------------------------------------------------------
+
+      # torch: CUDA-enabled build required for usable qwen3 TTS performance.
+      # Plain `pip install torch` (or letting it resolve as a transitive dep
+      # of transformers/accelerate) pulls the CPU-only wheel from PyPI, and
+      # the qwen3 voice then either silently runs ~10x slower or fails to
+      # use the GPU at all — there is no error, just bad performance. You
+      # must install torch explicitly from the PyTorch CUDA index, e.g.:
+      #   pip install torch --index-url https://download.pytorch.org/whl/cu121
+      # (pick the cuXXX tag matching your installed CUDA toolkit; this dev
+      # env currently has torch==2.12.1+cu130 — see requirements-lock.txt).
+      # Do not add a bare "torch" line to a requirements file that pip
+      # resolves normally; it will silently downgrade to CPU-only.
+
+      # transformers: pinned. An upgrade past this version previously broke
+      # qwen-tts compatibility (the qwen3 voice provider failed to load /
+      # generate). The known-working pin, found in this env's freeze, is:
+      #   transformers==4.57.3
+      # Do not bump transformers without re-validating qwen-tts end to end
+      # on a GPU machine.
+
+      # faster-qwen3-tts: required for usable TTS latency. The provider
+      # prefers this package's CUDA-graph engine (~10x faster, RTF <1 on an
+      # 8GB laptop GPU) and only falls back to plain qwen-tts — silently
+      # about 10x slower, no error — when it's missing. Install both:
+      #   pip install "faster-qwen3-tts>=0.3.0" "qwen-tts>=0.1.1"
+      # (pyproject's qwen-tts extra installs both already; this note exists
+      # because it is easy to end up with only qwen-tts if faster-qwen3-tts
+      # fails to build and the failure goes unnoticed.)
+
+      # soxr: pip package used by the audio resampling path alongside the
+      # qwen3 voice. Distinct from the `sox` SYSTEM BINARY below — you need
+      # both, they are not substitutes for each other.
+      # soxr>=0.3
+
+      # ---------------------------------------------------------------
+      # Everything else: install via pyproject extras, not here.
+      # ---------------------------------------------------------------
+      # pip install -e ".[web]"                 # fastapi backend + web UI (needed for the test suite)
+      # pip install -e ".[voice]"                # mic/VAD/local TTS path
+      # pip install -e ".[openai]"                # OpenAI LLM provider
+      # pip install -e ".[gemini]"                # Gemini LLM provider
+      # pip install -e ".[memory]"                # chromadb + sentence-transformers long-term recall
+      # pip install -e ".[search]"                # keyless DuckDuckGo web search
+      # pip install -e ".[qwen-tts]"               # qwen3 cloned-voice TTS (see pins above)
+
+# ---------------------------------------------------------------------
+# Non-pip, non-conda dependencies (not expressible in this file):
+# ---------------------------------------------------------------------
+#
+# - `sox`: a SYSTEM BINARY (not a Python package) required by the qwen3 TTS
+#   audio pipeline. Install via your OS package manager, e.g. on
+#   Debian/Ubuntu (including WSL): `sudo apt install sox`. This is separate
+#   from the `sox`/`soxr` PYTHON packages, which pip installs on their own.
+#
+# - qwen3 voice weights (~9.8GB): auto-download from Hugging Face on first
+#   use of the qwen3_tts provider. Not vendored, not pinned here — just
+#   budget the disk space and bandwidth the first time you run it.
+#
+# - models/kurisu_voice_qwen/kurisu_ref.wav: the zero-shot voice clone
+#   reference clip. This is gitignored runtime state (see .gitignore's
+#   `models/` entry), not shipped in the repo. Without it, the qwen3_tts
+#   provider cannot start; see docs/dev-setup.md for where to get it
+#   (ships with the runtime assets, check the release
+#   artifacts) or use a different providers.tts value in config.local.yaml.

@@ -1,0 +1,14 @@
+name: Megumin
+full_name: Megumin
+description: Arch-wizard of the Crimson Demons. One spell, maximum drama, no regrets.
+author: private fan pack (character (c) Natsume Akatsuki / KADOKAWA)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: megumin
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Megumin (KonoSuba)"
+# (static/models/Megumin.vrm).
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "ワガナはメグニン!アークリザードをなりワイトし爆裂魔法をあやつるもの!他の魔法を覚えてくれ?私は爆裂魔法しか愛せません!"
+  language: Japanese

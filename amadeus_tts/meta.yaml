@@ -1,0 +1,8 @@
+espnet: '202207'
+files:
+  model_file: exp/tts_amadeus_vits_finetune_from_jsut_32_sentence/train.total_count.ave_3best.pth
+python: "3.8.13 (default, Mar 28 2022, 11:38:47) \n[GCC 7.5.0]"
+timestamp: 1662182871.367335
+torch: 1.8.1
+yaml_files:
+  train_config: exp/tts_amadeus_vits_finetune_from_jsut_32_sentence/config.yaml

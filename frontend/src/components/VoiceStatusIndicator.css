@@ -1,0 +1,140 @@
+/* Consolidated voice-state indicator (replaces the old lone .speaking-dot):
+   five bars whose animation/color communicate idle/listening/transcribing/
+   thinking/speaking at a glance. */
+.voice-status {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 22px;
+  height: 14px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.voice-status i {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--text-muted);
+  transform-origin: bottom;
+  transform: scaleY(0.15);
+  opacity: 0.6;
+}
+
+/* --- idle: dim, static, just a faint resting silhouette --------------- */
+.voice-status-idle i {
+  background: var(--text-muted);
+  opacity: 0.4;
+  transform: scaleY(0.15);
+}
+
+/* --- listening: bars are painted directly via refs from the rAF loop in
+   VoiceStatusIndicator.tsx (transform: scaleY(...)); color + a soft glow
+   here so it reads as "live" even between frames. --- */
+.voice-status-listening i {
+  background: var(--accent-strong);
+  opacity: 1;
+  box-shadow: 0 0 6px rgba(var(--auburn-rgb), 0.45);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+/* --- transcribing: fixed staggered heights + a shimmer sweep ----------- */
+.voice-status-transcribing i {
+  background: #9fd8e8;
+  opacity: 0.85;
+  animation: voice-status-shimmer 1.2s var(--ease-in-out) infinite;
+}
+
+.voice-status-transcribing i:nth-child(1) {
+  transform: scaleY(0.35);
+  animation-delay: 0s;
+}
+.voice-status-transcribing i:nth-child(2) {
+  transform: scaleY(0.7);
+  animation-delay: 0.1s;
+}
+.voice-status-transcribing i:nth-child(3) {
+  transform: scaleY(1);
+  animation-delay: 0.2s;
+}
+.voice-status-transcribing i:nth-child(4) {
+  transform: scaleY(0.7);
+  animation-delay: 0.3s;
+}
+.voice-status-transcribing i:nth-child(5) {
+  transform: scaleY(0.35);
+  animation-delay: 0.4s;
+}
+
+@keyframes voice-status-shimmer {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* --- thinking: slow, uniform opacity pulse across all bars ------------- */
+.voice-status-thinking i {
+  background: var(--accent);
+  transform: scaleY(0.55);
+  animation: voice-status-think 1.6s var(--ease-in-out) infinite;
+}
+
+@keyframes voice-status-think {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* --- speaking: adapted from the old .speaking-dot pulse ring, applied to
+   the whole bar cluster instead of a single dot. --- */
+.voice-status-speaking i {
+  background: var(--accent);
+  transform: scaleY(0.8);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  animation: voice-status-speak 1.4s var(--ease-in-out) infinite;
+}
+
+.voice-status-speaking i:nth-child(2n) {
+  animation-delay: 0.15s;
+}
+
+@keyframes voice-status-speak {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleY(0.65);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-status i {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .voice-status-transcribing i,
+  .voice-status-thinking i,
+  .voice-status-speaking i {
+    opacity: 0.9;
+    transform: scaleY(0.6);
+  }
+
+  /* State still reads via color alone when motion is off. */
+  .voice-status-idle i {
+    opacity: 0.4;
+  }
+}

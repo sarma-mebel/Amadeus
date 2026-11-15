@@ -1,0 +1,200 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: dark;
+  --surface-primary: var(--navy-900);
+  --surface-secondary: var(--navy-800);
+  --surface-elevated: rgba(17, 25, 40, 0.82);
+  --text-primary: #f9fafb;
+  --text-muted: rgba(249, 250, 251, 0.68);
+  --border-soft: var(--surface-alpha-08);
+  --shadow-soft: 0 18px 60px rgba(10, 14, 28, 0.55);
+  --shadow-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --glass-blur: 18px;
+  font-family: 'IBM Plex Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(var(--auburn-deep-rgb), 0.2), transparent 45%),
+    radial-gradient(circle at 72% 18%, rgba(var(--auburn-rgb), 0.14), transparent 55%),
+    linear-gradient(160deg, #06080f 0%, #0f172a 55%, #030712 100%);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  /* VN mode's .chat-panel becomes an absolutely-positioned overlay anchored
+     to this container rather than the viewport. */
+  position: relative;
+}
+
+.vrm-panel {
+  flex: 0 0 61.8%;
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, rgba(var(--auburn-deep-rgb), 0.16), transparent 62%),
+              radial-gradient(circle at 70% 70%, rgba(var(--auburn-rgb), 0.12), transparent 70%),
+              #000;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.vrm-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(7, 11, 22, 0.85) 0%, rgba(7, 11, 22, 0.4) 30%, transparent 70%),
+    linear-gradient(120deg, rgba(250, 250, 250, 0.06), transparent 60%);
+}
+
+.chat-panel {
+  flex: 1 1 38.2%;
+  display: flex;
+  flex-direction: column;
+  /* Translucent dark + blur/saturate so the 3D scene glows through subtly;
+     the time-of-day tint layers on top via --tod-tint (set on .chat-interface
+     in ChatInterface.tsx) without this panel needing to know the bucket. */
+  background: linear-gradient(180deg, rgba(10, 15, 26, 0.82), rgba(10, 15, 26, 0.86));
+  box-shadow: var(--shadow-inset);
+  border-left: 1px solid var(--border-soft);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+}
+
+/* Shared by VRMViewer's own loading/error overlay and the Suspense
+   fallback shown in App.tsx while the VRMViewer chunk itself is still
+   downloading — must not live behind the lazy-loaded chunk's CSS. */
+.vrm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+  color: var(--text-primary);
+  background: rgba(7, 11, 22, 0.55);
+}
+
+.vrm-overlay p {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+.vrm-overlay-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 320px;
+}
+
+.vrm-overlay-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  animation: vrm-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vrm-overlay-spinner {
+    animation: none;
+  }
+}
+
+@keyframes vrm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Immersion ("VN") mode: avatar fills the width, the chat panel becomes a
+   transparent bottom overlay (its own children — header/input/dialogue —
+   opt back into pointer-events via ChatInterface.css). */
+[data-mode='vn'] .vrm-panel {
+  flex: 1 1 100%;
+}
+
+[data-mode='vn'] .chat-panel {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-height: 45vh;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+  z-index: var(--z-header);
+}
+
+/* Mobile responsive */
+@media (max-width: 1024px) {
+  .vrm-panel {
+    flex: 0 0 clamp(360px, 52vw, 620px);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .vrm-panel {
+    flex: 0 0 38vh;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .chat-panel {
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  [data-mode='vn'] .vrm-panel {
+    flex: 1 1 100%;
+  }
+
+  [data-mode='vn'] .chat-panel {
+    position: absolute;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-height: 45vh;
+    border-top: none;
+  }
+}
+
+/* Small phones (≤480px, 360px-class Android via Capacitor). The 768px tier
+   above already stacks the panels; here we reclaim vertical space so a short
+   (~640px-tall) screen keeps the transcript usable instead of losing 38% of
+   the viewport to the avatar band. */
+@media (max-width: 480px) {
+  .vrm-panel {
+    /* Shrink toward ~30vh but keep a floor so the avatar stays recognizable
+       on very short screens; caps the band on taller phones too. */
+    flex: 0 0 clamp(180px, 30vh, 240px);
+  }
+
+  [data-mode='vn'] .vrm-panel {
+    flex: 1 1 100%;
+  }
+
+  [data-mode='vn'] .chat-panel {
+    max-height: 55vh;
+  }
+}

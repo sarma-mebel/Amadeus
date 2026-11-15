@@ -1,0 +1,157 @@
+/* Animation vetting lab panel (?view=animlab) — sits in the chat-panel
+   column next to the VRM scene; same navy/auburn token family. */
+
+.animlab {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--navy-900, rgb(9, 13, 22));
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+}
+
+.animlab-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--surface-alpha-08, rgba(255, 255, 255, 0.08));
+}
+
+.animlab-header h2 {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--auburn-300, #d75a65);
+}
+
+.animlab-sub {
+  margin: 6px 0 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.animlab-idle-btn {
+  border: 1px solid rgba(var(--auburn-rgb, 193, 68, 79), 0.5);
+  background: transparent;
+  color: var(--auburn-300, #d75a65);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.animlab-idle-btn:hover {
+  background: rgba(var(--auburn-rgb, 193, 68, 79), 0.15);
+}
+
+.animlab-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.animlab-role {
+  margin: 12px 4px 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.animlab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.animlab-row:hover {
+  background: var(--surface-alpha-06, rgba(255, 255, 255, 0.06));
+}
+
+.animlab-row.playing {
+  border-color: rgba(var(--auburn-rgb, 193, 68, 79), 0.55);
+  background: rgba(var(--auburn-rgb, 193, 68, 79), 0.08);
+}
+
+.animlab-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.animlab-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.animlab-meta {
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.animlab-badge {
+  font-style: normal;
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+}
+
+.animlab-badge.loop {
+  color: #8fd9a8;
+  border-color: rgba(143, 217, 168, 0.4);
+}
+
+.animlab-badge.off {
+  color: var(--error-400, #d9534f);
+  border-color: rgba(var(--error-rgb, 217, 83, 79), 0.4);
+}
+
+.animlab-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.animlab-actions button {
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  background: var(--surface-alpha-06, rgba(255, 255, 255, 0.06));
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.animlab-actions button:hover {
+  border-color: rgba(var(--auburn-rgb, 193, 68, 79), 0.6);
+  color: #fff;
+}
+
+.animlab-footer {
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--surface-alpha-08, rgba(255, 255, 255, 0.08));
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.animlab-footer code {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.6);
+}

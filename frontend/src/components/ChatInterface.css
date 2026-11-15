@@ -1,0 +1,2078 @@
+.chat-interface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  color: var(--text-primary);
+}
+
+.chat-header {
+  padding: 24px 28px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(
+    140deg,
+    rgba(12, 17, 31, 0.85) 0%,
+    rgba(18, 24, 40, 0.92) 50%,
+    rgba(11, 16, 28, 0.88) 100%
+  );
+  /* Auburn hairline continues the boot HUD's accent framing. */
+  border-bottom: 1px solid rgba(var(--auburn-rgb), 0.28);
+  box-shadow: 0 10px 32px rgba(6, 10, 18, 0.45);
+  backdrop-filter: blur(20px);
+  position: relative;
+  /* No overflow: hidden — the ::after tint is contained by inset: 0
+     anyway, and clipping cut off the StatusChip popover that opens
+     below the header edge. z-index lifts the whole header's stacking
+     context above the transcript so that popover paints over message
+     bubbles rather than under them. */
+  z-index: var(--z-header);
+}
+
+/* Time-of-day tint (Tier 3): --tod-tint is set per data-tod bucket in
+   theme.css; layered subtly over the auburn glow so a viewer should barely
+   notice the shift, but night reads cooler/dimmer than day. */
+.chat-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 18% 18%, rgba(var(--auburn-deep-rgb), 0.2), transparent 45%),
+              radial-gradient(circle at 82% 18%, rgba(var(--auburn-rgb), 0.14), transparent 55%),
+              linear-gradient(140deg, var(--tod-tint), transparent 65%);
+  opacity: 0.85;
+  pointer-events: none;
+  transition: background 1.2s ease;
+}
+
+.chat-title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-subtitle {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  /* Boot-screen cyan, quiet: same secondary accent as COGNITIVE MEMORY
+     INTERFACE on the connection page. */
+  color: #9fd8e8;
+  opacity: 0.62;
+}
+
+.chat-toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+}
+
+.agent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 96px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.agent-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.agent-options::-webkit-scrollbar-thumb {
+  background: var(--surface-alpha-14);
+  border-radius: 8px;
+}
+
+.agent-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agent-pill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-alpha-12);
+  background: rgba(20, 27, 43, 0.78);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.agent-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-border);
+}
+
+.agent-pill.selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  box-shadow: 0 6px 16px rgba(var(--auburn-deep-rgb), 0.2);
+}
+
+.transcript-toggle {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--identity-border);
+  background: var(--identity-soft);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  margin-left: auto;
+}
+
+.transcript-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(var(--auburn-rgb), 0.22);
+}
+
+.transcript-toggle.open {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+.transcript-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 24px;
+  background: rgba(12, 18, 33, 0.55);
+}
+
+.transcript-history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.transcript-history select {
+  appearance: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-alpha-12);
+  background: var(--navy-800);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.transcript-history select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.transcript-panel {
+  border-radius: 14px;
+  border: 1px solid var(--surface-alpha-08);
+  background: rgba(14, 20, 34, 0.9);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.transcript-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 224, 189, 0.75);
+}
+
+.transcript-time {
+  font-weight: 600;
+}
+
+.transcript-agents {
+  font-style: italic;
+}
+
+.transcript-summary {
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: rgba(243, 244, 246, 0.85);
+  border-bottom: 1px solid var(--surface-alpha-08);
+  padding-bottom: 6px;
+}
+
+.transcript-empty {
+  font-size: 12px;
+  color: rgba(200, 205, 220, 0.7);
+  text-align: center;
+  padding: 6px 0;
+}
+
+.transcript-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.transcript-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(19, 26, 44, 0.9);
+  border: 1px solid var(--surface-alpha-06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.transcript-entry header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 208, 138, 0.8);
+}
+
+.transcript-round {
+  font-weight: 600;
+}
+
+.transcript-agent {
+  font-style: italic;
+}
+
+.transcript-entry p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(229, 231, 235, 0.92);
+}
+
+/* Mono/tracked HUD treatment: the status line speaks the same language as
+   the boot screen's diagnostic log. */
+.chat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+.chat-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  /* Nixie amber, not generic status-green: matches the boot HUD. */
+  background: rgba(var(--amber-rgb), 0.8);
+  box-shadow: 0 0 0 6px rgba(var(--amber-rgb), 0.16);
+}
+
+.chat-status.busy::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+
+.chat-timestamp {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 28px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: var(--surface-alpha-14);
+  border-radius: 8px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+/* A2: after a greeting/restored bubble has arrived but before the user has
+   spoken, the chips persist as a centered footer (not the full-height hero) so
+   the warm invitation survives the auto-greeting race. */
+.empty-state-suggestions.chips-footer {
+  margin: 16px auto 8px;
+  align-self: center;
+}
+
+/* Tier 4b: in-character starter prompts instead of a bare placeholder line. */
+.empty-state-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 480px;
+}
+
+.suggestion-chip {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-alpha-12);
+  background: rgba(20, 27, 43, 0.78);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.suggestion-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  box-shadow: 0 8px 20px rgba(var(--auburn-deep-rgb), 0.22);
+}
+
+.transcript-restore-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 14px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.transcript-restore-divider::before,
+.transcript-restore-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+/* Tier 2: metadata de-noising. A group header (sender + context) appears
+   only when the speaker changes or a >5 minute gap separates messages from
+   the same speaker; grouped bubbles from the same speaker sit close
+   together with a smaller gap than separate groups. */
+.message-group-header {
+  align-self: flex-start;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.message-group-header.user {
+  align-self: flex-end;
+}
+
+.message-group-header.system {
+  align-self: center;
+}
+
+.message-group-header.agent {
+  color: rgba(255, 208, 138, 0.75);
+}
+
+.message {
+  max-width: min(82%, 640px);
+  padding: 0;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  animation: fadeIn var(--dur-med) var(--ease-out);
+  position: relative;
+  margin-bottom: 3px;
+}
+
+.message.user {
+  align-self: flex-end;
+}
+
+.message.assistant {
+  align-self: flex-start;
+}
+
+.message.agent {
+  align-self: flex-start;
+}
+
+.message.system {
+  align-self: center;
+  max-width: min(90%, 720px);
+}
+
+.message-content {
+  /* No backdrop-filter here: bubbles sit on an already-translucent glass
+     panel, and dozens of blur layers compositing over the live WebGL
+     canvas would tank frame rate. */
+  padding: 13px 18px;
+  background: rgba(20, 27, 43, 0.88);
+  border-radius: 18px;
+  border: 1px solid var(--surface-alpha-06);
+  box-shadow: 0 12px 28px rgba(6, 10, 20, 0.45);
+  position: relative;
+}
+
+/* Japanese subtitle: the text Kurisu actually speaks, shown quietly under the
+   English reply. Muted + slightly smaller so English stays the primary read. */
+.message-japanese {
+  display: block;
+  margin-top: 8px;
+  padding-left: 10px;
+  /* Auburn accent: this is the line she actually speaks — designed pairing,
+     not a footnote. */
+  border-left: 2px solid rgba(var(--auburn-rgb), 0.45);
+  color: var(--text-muted);
+  font-family: var(--font-jp);
+  font-size: 0.86em;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+}
+
+/* Unspoken [thought] ghost line (web.streaming_inner_thoughts): visibly
+   "internal" — faint, italic, no speech accent bar, an ellipsis lead-in. */
+.message-thought {
+  display: block;
+  margin-top: 8px;
+  padding-left: 10px;
+  color: var(--text-muted);
+  opacity: 0.62;
+  font-style: italic;
+  font-size: 0.84em;
+  line-height: 1.5;
+}
+
+.message-thought::before {
+  content: '… ';
+  opacity: 0.8;
+}
+
+/* A3: streaming liveness caret. A blinking block trails the growing last
+   assistant bubble so a slow stream (after the SYNTHESIZING indicator clears)
+   doesn't read as frozen/done. Auburn — same speech accent as .message-japanese. */
+.streaming-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: rgba(var(--auburn-rgb), 0.85);
+  font-weight: 600;
+  animation: streaming-caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes streaming-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-caret {
+    /* No blink for reduced-motion: a steady caret still signals "live". */
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
+/* Tier 1 — bubble weight inversion. The user bubble stays mostly surface,
+   with only a restrained auburn tint so it does not shout over Kurisu's
+   replies. */
+.message.user .message-content {
+  background: linear-gradient(135deg, rgba(var(--auburn-deep-rgb), 0.28), rgba(var(--auburn-rgb), 0.12)),
+              var(--navy-800);
+  border: 1px solid var(--accent-border);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+}
+
+/* Kurisu's bubbles keep the dark surface treatment but get slightly MORE
+   presence than the user's — she's the content — via a faint auburn edge
+   glow rather than a loud fill. */
+.message.assistant .message-content {
+  border-bottom-left-radius: 6px;
+  border: 1px solid var(--identity-border);
+  box-shadow: 0 12px 28px rgba(6, 10, 20, 0.45), 0 0 0 1px rgba(var(--auburn-rgb), 0.08) inset;
+}
+
+.message.agent .message-content {
+  border-left: 3px solid var(--accent-border);
+  background: rgba(18, 26, 45, 0.86);
+}
+
+.message.system .message-content {
+  background: var(--surface-alpha-08);
+  color: rgba(243, 244, 246, 0.92);
+  border: 1px solid var(--surface-alpha-12);
+  text-align: center;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  padding-right: 18px;
+}
+
+.message.loading .message-content {
+  opacity: 0.85;
+}
+
+/* HUD-style thinking indicator: mono tracked label + three pulsing auburn
+   dots — same diagnostic-log language as the boot screen, replacing the old
+   italic "Thinking..." placeholder. */
+.thinking-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thinking-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: rgba(var(--auburn-rgb), 0.85);
+}
+
+.thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.thinking-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--auburn-300);
+  animation: thinking-dot 1.2s var(--ease-in-out) infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes thinking-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dots span {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* Tier 4a: error messages (the fake "Error: Could not get response" bubble
+   and the mid-stream "(connection lost…)" marker) get a distinct muted-red
+   inset style so they read as a system/error state rather than a normal
+   reply from Kurisu. */
+.message.is-error .message-content {
+  background: rgba(var(--error-rgb), 0.12);
+  border: 1px solid rgba(var(--error-rgb), 0.4);
+  box-shadow: inset 0 0 0 1px rgba(var(--error-rgb), 0.15);
+  color: rgba(255, 235, 234, 0.95);
+}
+
+/* Tier 2: timestamps within a group are hidden by default and revealed on
+   hover/focus (desktop). The accessible alternative is a full timestamp
+   already exposed via the bubble's aria-label and this span's title
+   attribute — never information available only on hover. */
+.message-timestamp-hover {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: rgba(249, 250, 251, 0.55);
+  /* Small pill so the reveal reads cleanly over text now that bubbles no
+     longer reserve 42px of dead right-padding for it. */
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(9, 13, 22, 0.78);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.message:hover .message-timestamp-hover,
+.message:focus-within .message-timestamp-hover {
+  opacity: 1;
+}
+
+.message.user .message-timestamp-hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-timestamp-hover {
+    transition: none;
+  }
+}
+
+/* Touch devices have no hover: keep timestamps faintly visible at all times
+   rather than requiring a tap-and-hold gesture to reveal them. */
+@media (hover: none) {
+  .message-timestamp-hover {
+    opacity: 0.6;
+  }
+}
+
+.input-container {
+  padding: 18px 24px 24px;
+  background: rgba(9, 13, 22, 0.88);
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 -12px 28px rgba(5, 8, 15, 0.45);
+}
+
+.input-container textarea {
+  width: 100%;
+  min-height: 44px;
+  max-height: 200px;
+  padding: 14px 16px;
+  border: 1px solid var(--surface-alpha-12);
+  border-radius: 14px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  color: var(--text-primary);
+  background: rgba(18, 26, 43, 0.9);
+  box-shadow: inset 0 4px 12px rgba(4, 6, 12, 0.38);
+}
+
+.input-container textarea:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.input-container textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.input-container textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Wrap instead of overflowing: the chat panel is only ~38% width, so
+     between ~768px and ~1200px this row (up to 8 controls + hint) has no
+     room to sit on one line. row-gap keeps wrapped rows from touching. */
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 10px;
+}
+
+/* The three continuous-voice controls (Hands-free / Barge-in / Call) read as
+   one interdependent unit — barge-in needs hands-free, call orchestrates both —
+   so they share a nested cluster that wraps together rather than scattering
+   across the primary row. */
+.voice-mode-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mute-toggle {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-alpha-06);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-alpha-12);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  box-shadow: none;
+}
+
+.mute-toggle:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--surface-alpha-12);
+}
+
+.mute-toggle.muted {
+  background: var(--identity-soft);
+  border-color: var(--identity-border);
+  color: rgba(255, 228, 230, 0.92);
+}
+
+.mute-toggle.muted:hover:not(:disabled) {
+  background: rgba(var(--auburn-rgb), 0.28);
+}
+
+.mute-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.mic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 18px;
+  line-height: 1;
+  background: var(--surface-alpha-06);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-alpha-12);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.mic-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--surface-alpha-12);
+}
+
+.mic-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mic-button.recording {
+  background: var(--identity-soft);
+  border-color: var(--identity-border);
+  animation: mic-pulse 1.1s var(--ease-in-out) infinite;
+}
+
+.mic-button.transcribing {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  cursor: wait;
+}
+
+.mic-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  animation: mic-spin 0.7s linear infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--auburn-rgb), 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(var(--auburn-rgb), 0);
+  }
+}
+
+@keyframes mic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tier 1: send button is now a solid Kurisu auburn fill, not a gradient — it's a
+   single, calm action rather than a second loud surface next to the
+   (already toned-down) user bubble. */
+.send-button {
+  padding: 10px 26px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  box-shadow: 0 14px 32px rgba(var(--auburn-deep-rgb), 0.34);
+}
+
+.send-button:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.01);
+  background: var(--accent-strong);
+  box-shadow: 0 18px 36px rgba(var(--auburn-rgb), 0.4);
+}
+
+.send-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.send-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.send-button.stop-button {
+  background: var(--auburn-600);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(var(--auburn-deep-rgb), 0.36);
+}
+
+.send-button.stop-button:hover:not(:disabled) {
+  background: var(--auburn-600);
+  box-shadow: 0 18px 36px rgba(var(--auburn-rgb), 0.42);
+}
+
+/* Tier 5: visible focus rings (auburn, 2px) on every interactive element
+   this stylesheet owns, beyond the component-specific :focus-visible rules
+   above. Keeps a consistent ring even for elements that don't otherwise
+   define one (buttons, checkboxes, selects). */
+.chat-interface button:focus-visible,
+.chat-interface select:focus-visible,
+.chat-interface input:focus-visible,
+.chat-interface textarea:focus-visible,
+.chat-interface [role='listitem']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.settings-gear-button {
+  background: var(--surface-alpha-06);
+  border: 1px solid var(--surface-alpha-12);
+  color: var(--text-primary);
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.settings-gear-button:hover {
+  transform: translateY(-1px);
+  background: var(--surface-alpha-12);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message {
+    animation: none;
+  }
+
+  .mic-button.recording {
+    animation: none;
+  }
+
+  .agent-pill,
+  .suggestion-chip,
+  .send-button,
+  .mute-toggle,
+  .mic-button,
+  .transcript-toggle,
+  .settings-gear-button {
+    transition: none;
+  }
+
+  .chat-header::after {
+    transition: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 20px 22px 16px;
+  }
+
+  .transcript-controls {
+    padding: 8px 18px;
+  }
+
+  .messages-container {
+    padding: 20px 18px 12px;
+    gap: 4px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .input-container {
+    padding: 16px 16px 18px;
+  }
+
+  .input-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .input-hint {
+    text-align: center;
+  }
+
+  .send-button {
+    width: 100%;
+  }
+}
+
+/* Launch-time update notice: same mono/tracked HUD language as .chat-status,
+   non-modal, sits just above the input row. */
+.update-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(var(--amber-rgb), 0.35);
+  border-radius: 10px;
+  background: var(--surface-alpha-06);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-primary);
+}
+
+.update-toast-label::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: rgba(var(--amber-rgb), 0.85);
+  box-shadow: 0 0 0 5px rgba(var(--amber-rgb), 0.14);
+}
+
+.update-toast button {
+  padding: 3px 8px;
+  border: 1px solid rgba(var(--amber-rgb), 0.3);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.update-toast button:hover {
+  background: rgba(var(--amber-rgb), 0.12);
+}
+
+.update-toast button:last-child {
+  margin-left: auto;
+  border: none;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+/* Runtime provider-status chip: same HUD language as .chat-status. */
+.status-chip-root {
+  position: relative;
+  display: inline-flex;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+
+.status-chip::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #58c470;
+  box-shadow: 0 0 0 4px rgba(88, 196, 112, 0.15);
+}
+
+.status-chip.degraded::before {
+  background: rgba(var(--amber-rgb), 0.9);
+  box-shadow: 0 0 0 4px rgba(var(--amber-rgb), 0.18);
+}
+
+.status-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  /* Centered under the chip, NOT right-anchored: the chat panel's
+     backdrop-filter makes Chromium clip descendants' paint to the panel
+     bounds, so a popover overhanging the panel's left edge lost its
+     background and half its label column. Centering keeps it inside. */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-popover);
+  min-width: 260px;
+  max-width: min(340px, 78vw);
+  padding: 12px 14px;
+  border: 1px solid var(--surface-alpha-12, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: var(--panel-solid, rgba(18, 16, 22, 0.97));
+  font-size: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.status-popover dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.status-popover dt {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  align-self: baseline;
+}
+
+.status-popover dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.status-badge {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(var(--amber-rgb), 0.18);
+  border: 1px solid rgba(var(--amber-rgb), 0.4);
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+/* ---- Markdown inside assistant bubbles ------------------------------- */
+/* Keeps the bubble's own padding/typography; only normalizes the elements
+   react-markdown emits. Wide content (code, tables) scrolls inside the
+   bubble instead of widening the layout. */
+.message-markdown {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.message-markdown > *:first-child {
+  margin-top: 0;
+}
+
+.message-markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.message-markdown p {
+  margin: 0 0 0.65em;
+}
+
+.message-markdown ul,
+.message-markdown ol {
+  margin: 0.4em 0 0.65em;
+  padding-left: 1.4em;
+}
+
+.message-markdown li {
+  margin: 0.15em 0;
+}
+
+.message-markdown a {
+  color: var(--amber-400);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.message-markdown a:hover {
+  color: var(--amber-200);
+}
+
+.message-markdown code {
+  font-family: var(--font-mono, 'Cascadia Code', 'Consolas', monospace);
+  font-size: 0.86em;
+  background: rgba(6, 10, 20, 0.7);
+  border: 1px solid var(--surface-alpha-08);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.message-markdown pre {
+  margin: 0.5em 0 0.65em;
+  padding: 10px 12px;
+  background: rgba(6, 10, 20, 0.82);
+  border: 1px solid rgba(var(--auburn-rgb), 0.22);
+  border-radius: 10px;
+  /* Long lines scroll inside the bubble — never widen the column. */
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.message-markdown pre code {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  white-space: pre;
+  font-size: 0.84em;
+  line-height: 1.55;
+}
+
+.message-markdown blockquote {
+  margin: 0.5em 0 0.65em;
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid rgba(var(--auburn-rgb), 0.45);
+  color: var(--text-muted, rgba(243, 244, 246, 0.72));
+}
+
+.message-markdown table {
+  /* GFM tables scroll horizontally inside the bubble like code blocks. */
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0 0.65em;
+  font-size: 0.9em;
+}
+
+.message-markdown th,
+.message-markdown td {
+  border: 1px solid var(--surface-alpha-12);
+  padding: 4px 9px;
+  text-align: left;
+}
+
+.message-markdown th {
+  background: var(--surface-alpha-06);
+}
+
+.message-markdown hr {
+  border: none;
+  border-top: 1px solid var(--surface-alpha-12);
+  margin: 0.7em 0;
+}
+
+/* ---- Retry affordance on error bubbles -------------------------------- */
+.message-error-actions {
+  margin-top: 8px;
+}
+
+.retry-button {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255, 235, 234, 0.95);
+  background: rgba(var(--error-rgb), 0.18);
+  border: 1px solid rgba(var(--error-rgb), 0.5);
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.retry-button:hover,
+.retry-button:focus-visible {
+  background: rgba(var(--error-rgb), 0.32);
+  border-color: rgba(var(--error-rgb), 0.75);
+}
+
+/* ---- Regenerate / edit / rewind message actions ------------------------ */
+/* Hidden until hover/focus (mirrors the timestamp reveal above) EXCEPT when
+   variants exist — the swipe counter should stay visible so the "2/3" state
+   isn't hidden behind a hover a touch user can't trigger. */
+.message-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.message:hover .message-actions,
+.message:focus-within .message-actions,
+.message-actions.always-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .message-actions {
+    opacity: 1;
+  }
+}
+
+.message-action-button {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--surface-alpha-08);
+  border: 1px solid var(--surface-alpha-12);
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.message-action-button:hover:not(:disabled),
+.message-action-button:focus-visible:not(:disabled) {
+  color: #fff;
+  background: rgba(var(--auburn-rgb), 0.22);
+  border-color: rgba(var(--auburn-rgb), 0.5);
+}
+
+.message-action-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.variant-counter {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0 2px;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* ---- Inline edit (M1b) -------------------------------------------------- */
+.message.editing {
+  align-self: flex-end;
+  max-width: min(82%, 640px);
+}
+
+.message-edit-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-edit-textarea {
+  width: 100%;
+  min-width: 240px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(9, 13, 22, 0.6);
+  border: 1px solid var(--accent-border);
+}
+
+.message-edit-textarea:focus {
+  outline: none;
+  border-color: rgba(var(--auburn-rgb), 0.7);
+}
+
+.message-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.message-edit-save,
+.message-edit-cancel {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.message-edit-save {
+  color: #fff;
+  background: rgba(var(--auburn-rgb), 0.3);
+  border: 1px solid rgba(var(--auburn-rgb), 0.6);
+}
+
+.message-edit-save:hover,
+.message-edit-save:focus-visible {
+  background: rgba(var(--auburn-rgb), 0.45);
+}
+
+.message-edit-cancel {
+  color: var(--text-muted);
+  background: var(--surface-alpha-08);
+  border: 1px solid var(--surface-alpha-12);
+}
+
+.message-edit-cancel:hover,
+.message-edit-cancel:focus-visible {
+  color: #fff;
+  background: var(--surface-alpha-12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+}
+
+/* ---- Status popover: dummy-LLM warning + tool availability ------------ */
+.status-dummy-warning {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 235, 234, 0.95);
+  background: rgba(var(--error-rgb), 0.14);
+  border: 1px solid rgba(var(--error-rgb), 0.45);
+}
+
+.status-tool-unavailable {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: rgba(255, 208, 138, 0.85);
+}
+
+/* ---- Conversation sidebar (drawer) ------------------------------------ */
+
+.chat-interface {
+  position: relative;
+}
+
+.session-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  /* Above .chat-header (z 50): the drawer spans full height, and the
+     header band otherwise click-blocks the drawer's close button and
+     first session entries. */
+  z-index: var(--z-drawer);
+  width: min(320px, 88%);
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 15, 28, 0.96);
+  border-right: 1px solid var(--surface-alpha-12);
+  box-shadow: 10px 0 28px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.session-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(var(--auburn-rgb), 0.28);
+}
+
+.session-sidebar-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+}
+
+.session-sidebar-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.session-sidebar-close:hover,
+.session-sidebar-close:focus-visible {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.session-new-button {
+  margin: 12px 16px 8px;
+  padding: 8px 10px;
+  background: rgba(var(--auburn-rgb), 0.14);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  color: var(--auburn-300, var(--text-primary));
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.session-new-button:hover,
+.session-new-button:focus-visible {
+  background: var(--accent-soft);
+}
+
+.session-sidebar-status {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.session-sidebar-status.error {
+  color: rgba(255, 138, 128, 0.9);
+}
+
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.session-item {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  margin: 2px 0;
+}
+
+.session-item:hover,
+.session-item:focus-within {
+  background: var(--surface-alpha-08, rgba(255, 255, 255, 0.05));
+}
+
+.session-item.current {
+  border-color: var(--accent-border);
+  background: rgba(var(--auburn-rgb), 0.1);
+}
+
+.session-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-item-title {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-item-meta {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* Content-search hit preview under the meta row. */
+.session-item-snippet {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: rgba(255, 244, 226, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.session-search {
+  margin: 0 16px 8px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-alpha-12);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.session-search::placeholder {
+  color: var(--text-muted);
+}
+
+.session-search:focus-visible {
+  outline: none;
+  border-color: var(--accent-border);
+}
+
+.session-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+}
+
+.session-item-action {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.session-item-action:hover,
+.session-item-action:focus-visible {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: var(--surface-alpha-12);
+}
+
+.session-item-action.delete.armed {
+  color: rgba(255, 138, 128, 0.95);
+  border-color: rgba(255, 138, 128, 0.5);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+/* ---- Hands-free conversation mode -------------------------------------- */
+
+.hands-free-toggle {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-alpha-06);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-alpha-12);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.hands-free-toggle:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--surface-alpha-12);
+}
+
+.hands-free-toggle.active {
+  background: var(--identity-soft);
+  border-color: var(--identity-border);
+  color: rgba(255, 228, 230, 0.92);
+}
+
+.hands-free-toggle.active:hover:not(:disabled) {
+  background: rgba(var(--auburn-rgb), 0.28);
+}
+
+.hands-free-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* "Listening…" indicator while hands-free capture is open: same pulsing
+   auburn language as the recording mic button. */
+.hands-free-listening {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(var(--auburn-rgb), 0.9);
+}
+
+.hands-free-listening-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--auburn-300);
+  animation: mic-pulse 1.1s var(--ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hands-free-toggle {
+    transition: none;
+  }
+
+  .hands-free-listening-dot {
+    animation: none;
+  }
+}
+
+/* Vision: pending screenshot/image attachment chip above the composer. */
+.pending-image-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pending-image-chip img {
+  height: 36px;
+  width: auto;
+  max-width: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.pending-image-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pending-image-chip button {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.pending-image-chip button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.screen-share-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.screen-share-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.screen-share-button.active {
+  border-color: rgba(var(--auburn-rgb), 0.6);
+}
+
+.screen-share-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Morning brief card (daily_brief feature): reference copy of the brief the
+   greeting already delivered; dismissible per day. */
+.morning-brief-card {
+  margin: 0 16px 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(var(--auburn-rgb), 0.3);
+  border-radius: 12px;
+  background: rgba(var(--auburn-deep-rgb, 120, 40, 40), 0.1);
+}
+
+.morning-brief-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.morning-brief-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--auburn-300, rgba(239, 71, 111, 0.85));
+}
+
+.morning-brief-header button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.morning-brief-header button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.morning-brief-text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+/* Offline-demo banner: same card, but a warning — red accent, always visible
+   while the LLM is the dummy fallback so canned replies can't pass as real. */
+.dummy-mode-banner {
+  border-color: rgba(255, 99, 71, 0.55);
+  background: rgba(255, 69, 40, 0.14);
+}
+
+.dummy-mode-banner .morning-brief-title {
+  color: rgba(255, 138, 118, 0.95);
+}
+
+.dummy-mode-banner-action {
+  margin-top: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 99, 71, 0.6);
+  background: rgba(255, 99, 71, 0.18);
+  color: #ffd9d1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.dummy-mode-banner-action:hover {
+  background: rgba(255, 99, 71, 0.32);
+  border-color: rgba(255, 99, 71, 0.85);
+}
+
+/* Milestone banner: same card as the morning brief, amber accent instead
+   of auburn so it reads as a celebration rather than a daily digest. */
+.milestone-banner {
+  border-color: rgba(var(--amber-rgb), 0.4);
+  background: rgba(var(--amber-rgb), 0.12);
+}
+
+.milestone-banner .morning-brief-title {
+  color: var(--amber-200, #ffd08a);
+}
+
+/* Conversational onboarding (M6): "SYNAPSE FORMED" chips near the header. */
+.synapse-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.synapse-chip {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--amber-rgb), 0.4);
+  background: rgba(var(--amber-rgb), 0.14);
+  color: var(--amber-200, #ffd08a);
+  animation: synapse-chip-pop var(--dur-med) var(--ease-spring);
+}
+
+@keyframes synapse-chip-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .synapse-chip {
+    animation: none;
+  }
+}
+
+/* ---- Immersion ("VN") mode ---------------------------------------------
+   App.css turns .chat-panel into a transparent, click-through overlay
+   anchored to the bottom of the (now full-width) avatar. Everything below
+   makes .chat-interface's own surface transparent and hands pointer-events
+   back to just the pieces the user still needs to touch: the header
+   buttons, the input bar, and the dialogue box itself. The transcript,
+   and morning-brief card are hidden outright — VN mode only
+   ever shows her latest line. */
+
+.chat-interface[data-mode='vn'] {
+  background: transparent;
+  pointer-events: none;
+}
+
+.chat-interface[data-mode='vn'] .messages-container,
+.chat-interface[data-mode='vn'] .morning-brief-card {
+  display: none;
+}
+
+/* The offline-demo warning must survive immersion mode: hiding "no AI is
+   connected" for aesthetics is exactly how dummy mode passes as real
+   (found live — the default view is VN, so the banner never showed). */
+.chat-interface[data-mode='vn'] .morning-brief-card.dummy-mode-banner {
+  display: block;
+  pointer-events: auto;
+}
+
+.chat-interface[data-mode='vn'] .chat-header {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.chat-interface[data-mode='vn'] .chat-header::after {
+  display: none;
+}
+
+.chat-interface[data-mode='vn'] .chat-toolbar,
+.chat-interface[data-mode='vn'] .chat-title {
+  pointer-events: auto;
+}
+
+.chat-interface[data-mode='vn'] .input-container {
+  background: transparent;
+  box-shadow: none;
+  border-top: none;
+  pointer-events: auto;
+}
+
+/* Fixed-position overlays (MemoryPanel/SettingsPanel) and the absolute
+   session drawer render as children of .chat-interface, so the
+   pointer-events: none above would otherwise swallow their clicks too —
+   pointer-events isn't scoped by `position`, only inherited down the DOM
+   tree. Hand it back explicitly. */
+.chat-interface[data-mode='vn'] .memory-overlay,
+.chat-interface[data-mode='vn'] .settings-overlay,
+.chat-interface[data-mode='vn'] .session-sidebar {
+  pointer-events: auto;
+}
+
+.vn-dialogue {
+  pointer-events: auto;
+  position: relative;
+  margin: 0 24px 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--auburn-rgb), 0.35);
+  background: rgba(10, 14, 26, 0.82);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(var(--glass-blur, 18px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px));
+  color: rgba(255, 255, 255, 0.92);
+  animation: vn-dialogue-in var(--dur-med) var(--ease-out);
+}
+
+.vn-dialogue-name {
+  display: block;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  margin-bottom: 4px;
+}
+
+.vn-dialogue-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  max-height: 6.2em;
+  overflow-y: auto;
+}
+
+.vn-dialogue-thinking {
+  display: inline-block;
+  font-size: 18px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+/* Subtle reminder that the mic barges in while she's mid-line — only shown
+   in VN mode while voiceState is 'speaking' and the mic is actually usable. */
+.vn-interrupt-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+@keyframes vn-dialogue-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-dialogue {
+    animation: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .vn-dialogue {
+    margin: 0 12px 10px;
+  }
+}
+
+/* Call mode HUD: floats above everything (incl. VN mode's pointer-events:
+   none root — hand events back explicitly, same pattern as the overlays). */
+.call-hud {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(239, 71, 111, 0.45);
+  background: rgba(9, 13, 22, 0.85);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.call-hud-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--text-primary);
+}
+
+.call-hud-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #7effa1;
+  animation: call-hud-pulse 1.6s var(--ease-in-out) infinite;
+}
+
+.call-hud-speaking .call-hud-dot { background: #ef476f; }
+.call-hud-listening .call-hud-dot { background: #7effa1; }
+.call-hud-thinking .call-hud-dot { background: #ffc46b; }
+.call-hud-transcribing .call-hud-dot { background: #8ecbff; }
+
+@keyframes call-hud-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.8); }
+}
+
+.call-hud-end {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 99, 71, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 69, 40, 0.2);
+  color: #ffd9d1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.call-hud-end:hover {
+  background: rgba(255, 69, 40, 0.35);
+}
+
+.chat-interface[data-mode='vn'] .call-hud {
+  pointer-events: auto;
+}
+
+/* SessionSidebar's empty-conversations state: EmptyState renders full-size
+   by default (built for the wider MemoryPanel/messages-container columns);
+   the sidebar is much narrower, so trim the icon and vertical padding to
+   fit without feeling cramped. */
+.session-sidebar-empty {
+  padding: 32px 14px;
+}
+
+.session-sidebar-empty .empty-state-icon {
+  width: 44px;
+  height: 44px;
+}

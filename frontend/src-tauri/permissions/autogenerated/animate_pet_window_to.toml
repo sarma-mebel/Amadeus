@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-animate-pet-window-to"
+description = "Enables the animate_pet_window_to command without any pre-configured scope."
+commands.allow = ["animate_pet_window_to"]
+
+[[permission]]
+identifier = "deny-animate-pet-window-to"
+description = "Denies the animate_pet_window_to command without any pre-configured scope."
+commands.deny = ["animate_pet_window_to"]

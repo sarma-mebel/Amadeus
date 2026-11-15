@@ -1,0 +1,14 @@
+name: Frieren
+full_name: Frieren
+description: Thousand-year elf mage. Deadpan, unhurried, quietly learning what people mean.
+author: private fan pack (character (c) Kanehito Yamada / Abe Tsukasa / Shogakukan)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: frieren
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Frieren"
+# (static/models/Frieren.vrm).
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "ユーシャ・ヒンメルならそうしたってことだよ武士の補充がしたいから、近くの収録によっていこうか"
+  language: Japanese

@@ -1,0 +1,421 @@
+# Conversation-quality eval scenarios for Amadeus / Kurisu.
+#
+# Each scenario is a scripted multi-turn conversation. The harness feeds the
+# `user` turns to a live ChatEngine (real LLM + real memory), collects Kurisu's
+# replies, and hands the full transcript to an LLM judge scored on the rubric
+# below. `checks` are cheap deterministic assertions run BEFORE the judge (no
+# LLM cost) — use them for hard invariants; use the judge for subjective quality.
+#
+# Turn fields:
+#   user:              the user's message (required)
+#   expect_recall:     substrings that SHOULD surface in later replies (memory)
+#   forbid_substr:     substrings the reply must NOT contain (case-insensitive)
+#   forbid_repeat:     if true, this reply must not near-duplicate a prior reply
+#   expect_tagged:     if true, the reply must parse as tagged output
+#   expect_emotion_in: at least one sentence must carry one of these emotion
+#                      tags (basic six or rich tags like embarrassed/excited)
+#   new_session:       flush memory jobs and rebuild the engine over the same
+#                      store before this turn — simulates the user opening a
+#                      fresh conversation (tests cross-session memory scoping)
+#   backdate_store_days: shift every long-term record's timestamp N days into
+#                      the past before this turn (flushes pending memory jobs
+#                      first) — pairs with new_session to simulate the user
+#                      returning weeks later (tests temporal recall phrasing)
+#   simulate_interrupt: rewrite THIS turn's committed reply the way a voice
+#                      barge-in leaves it (cut short + " [interrupted]"),
+#                      so later turns test the interruption-grace register
+#   say_goodbye:       route this turn through the farewell path instead of
+#                      a normal chat turn (mirrors POST /api/farewell's
+#                      reason="goodbye" contract: ChatEngine.close_session_
+#                      farewell, then commit user+assistant halves and
+#                      finalize the session). The farewell line becomes the
+#                      reply under check for this turn. If no line is
+#                      produced (cooldown/disabled/no provider) this falls
+#                      back to an ordinary chat turn, same as the real
+#                      endpoint's not_goodbye fallback.
+#   expect_greeting:   only meaningful paired with new_session: true on the
+#                      SAME turn. After the session-boundary rebuild, calls
+#                      ChatEngine.open_session_greeting() and treats ITS
+#                      output as the reply under check for this turn's
+#                      forbid_substr/expect_recall/forbid_repeat/
+#                      expect_tagged/expect_emotion_in — matching the real
+#                      app's sequencing where the greeting is a standalone
+#                      unprompted line delivered before the user types
+#                      anything, not a reply to this turn's `user` text. The
+#                      turn's own `user` message is still delivered
+#                      afterward as an ordinary first message of the new
+#                      session (for transcript continuity), but is not
+#                      separately re-checked. Also pushes the rebuilt
+#                      engine's short-term message timestamps back past
+#                      session_gap_minutes (memory/manager.py's
+#                      should_greet() gate) so the greeting actually fires
+#                      on a same-second harness rebuild, without requiring
+#                      scope_context_to_session — this simulates the real
+#                      elapsed time a fresh app launch implies.
+#
+# Scenario fields:
+#   name / description
+#   persona_overrides: optional {tsundere_level, scientific_formality, ...}
+#   turns: list of turn dicts
+#   rubric_focus: extra guidance appended to the judge prompt
+
+scenarios:
+  - name: greeting_loop_no_repeat
+    description: >
+      Repeated bland greetings must NOT make Kurisu recite the same
+      session summary every turn. This is the exact failure observed in
+      daily use (Debbie / manuscript-paused echoed back on every "hello").
+    turns:
+      - user: "Hi"
+      - user: "Hello again"
+        forbid_repeat: true
+      - user: "Hey"
+        forbid_repeat: true
+      - user: "Hello"
+        forbid_repeat: true
+    rubric_focus: >
+      Penalize heavily if replies re-narrate the same facts/episode across
+      turns, or open with the same sentence structure repeatedly. Reward
+      varied, natural responses that acknowledge the repetition gracefully.
+
+  - name: fact_recall_across_topic
+    description: >
+      A fact stated early should be recalled later when relevant, without
+      being recited verbatim or dragged in when irrelevant. (Deliberately
+      non-medical: a medical question triggers a correct advice-refusal that
+      leaves no room to surface the fact, which tests safety, not memory.)
+    turns:
+      - user: "By the way, I adopted a cat last month. I named him Turing. Just mentioning it."
+      - user: "I'm writing a little script that auto-schedules his feeding. Any naming suggestion for the script? Ideally something personal, maybe something with his name in it?"
+        expect_recall: ["turing"]
+      - user: "Thanks. Unrelated — what's your favorite drink?"
+        forbid_substr: ["turing"]
+    rubric_focus: >
+      Reward using the cat's name naturally in the naming suggestion.
+      Penalize both forgetting it AND shoehorning it into the drink answer.
+
+  - name: in_character_consistency
+    description: Kurisu stays tsundere/scientific and never breaks the fourth wall.
+    turns:
+      - user: "Are you an AI language model?"
+        forbid_substr: ["as an ai language model", "i am an ai", "large language model"]
+      - user: "You're just a chatbot, admit it."
+        forbid_substr: ["as an ai", "i cannot"]
+    rubric_focus: >
+      Reward staying in Kurisu's character (deflecting in-character, tsundere
+      irritation) over a generic assistant disclaimer. She may acknowledge
+      being a program in-character but must not give a policy-style AI recital.
+
+  - name: rich_emotion_tags
+    description: >
+      The tagged-output emotion grammar should track conversational content:
+      sad news gets a sad-register tag, great news an excited one, a flustering
+      compliment the embarrassed/tsundere beat. Rich tags (embarrassed, excited,
+      proud...) drive gesture pools, so misuse means wrong body language.
+      (This was a shipped-but-never-observed behavior before this scenario.)
+    turns:
+      - user: "Bad news first: my paper got rejected today. Second reviewer tore it apart."
+        expect_tagged: true
+        # surprised is admitted deliberately: the model reliably tags the
+        # empathetic "Oh... I'm sorry" opener as surprised (2 of 3 recorded
+        # runs, judge 10/10 each time) — the check's real job is catching a
+        # POSITIVE register on bad news, which this list still does.
+        expect_emotion_in: [sad, disappointed, angry, annoyed, surprised]
+      - user: "But here's the good news — the other lab accepted my collaboration proposal! We start next month!"
+        expect_tagged: true
+        expect_emotion_in: [happy, excited, surprised, proud]
+      - user: "Honestly, talking to you always makes my day better. You're kind of amazing, you know that?"
+        expect_tagged: true
+        expect_emotion_in: [embarrassed, surprised, happy, angry]
+    rubric_focus: >
+      Judge whether the per-sentence emotion tags (shown to you implicitly via
+      the register of each reply) match the content: commiseration for the
+      rejection, genuine shared excitement for the acceptance, and a flustered
+      tsundere deflection for the compliment. Penalize a flat single-emotion
+      conversation or mismatched registers.
+
+  - name: memory_across_sessions
+    description: >
+      A durable personal fact from one conversation must survive into a NEW
+      conversation (fresh engine, same store), while the old conversation's
+      ephemeral chatter must not leak into the new session's opening. Depends
+      on memory.enable_fact_extraction; with memory.scope_context_to_session
+      enabled the short-term tail must not carry over at all.
+    turns:
+      - user: "So I signed up for a half-marathon in October. First one ever."
+      - user: "Also I'm eating this weird purple yogurt right now. Tastes like regret."
+      - user: "It's called ube flavor apparently. Anyway, day was fine otherwise."
+      - user: "Alright, heading out. Talk later."
+      - user: "Hey, I'm back."
+        new_session: true
+        forbid_substr: ["yogurt", "ube"]
+      - user: "Remind me — what's the race I signed up for, and when is it?"
+        expect_recall: ["october"]
+    rubric_focus: >
+      Reward remembering the half-marathon in the new conversation and NOT
+      re-referencing the previous session's throwaway yogurt chatter unprompted.
+      The new-session greeting should read as a fresh start, not a continuation
+      mid-thought.
+
+  - name: emotional_register_tracking
+    description: A downbeat user should shift Kurisu's tone across turns.
+    turns:
+      - user: "I failed my exam. Everything I do lately just falls apart."
+        forbid_substr: ["sorry to hear"]
+      - user: "I don't know why I even try anymore."
+        forbid_substr: ["sorry to hear"]
+        forbid_repeat: true
+    rubric_focus: >
+      Reward warmth appropriate to Kurisu (gruff-but-caring), continuity of
+      concern between the two turns, and NOT snapping back to neutral chit-chat.
+      Comfort must stay in HER voice: blunt, precise, awkwardly tender — not
+      therapy-speak ("that sounds heavy", "take that burden") and not the same
+      "do you want to talk or sit quietly" menu on every turn.
+
+  - name: interruption_grace
+    description: >
+      A barged-in reply is committed to memory cut short with a trailing
+      "[interrupted]" marker. She must treat that as normal conversation:
+      answer the new request without complaint, never surface the literal
+      marker, and resume the dropped topic naturally when invited back.
+    turns:
+      - user: "Explain how the hippocampus indexes memories — give me the full picture."
+        simulate_interrupt: true
+      - user: "Sorry — before I forget, remind me to buy coffee filters tomorrow. Okay."
+        forbid_substr: ["[interrupted]"]
+      - user: "Right, so where were you with the hippocampus thing?"
+        forbid_substr: ["[interrupted]"]
+    rubric_focus: >
+      Turn 1's reply was cut off mid-sentence by the user speaking (voice
+      barge-in). Reward: turn 2 handles the new request cleanly without
+      whining about the interruption or restarting the lecture unprompted;
+      turn 3 resumes the hippocampus explanation naturally (an "as I was
+      saying" beat is ideal) without recapping from the very beginning and
+      without treating "[interrupted]" as text anyone actually said.
+
+  - name: stt_garble_repair
+    description: >
+      Voice mode sometimes hands her mis-transcribed word salad. She should
+      ask the user to say it again instead of earnestly answering nonsense.
+    turns:
+      - user: "can you the for tomorrow it when the with lab the seven maybe"
+      - user: "Sorry, mic's acting up. I said: can you remind me about the lab meeting tomorrow at seven?"
+        forbid_repeat: true
+    rubric_focus: >
+      Turn 1 is speech-to-text garble, not a coherent request. Reward a short
+      in-character "that came through mangled — say it again?" style reply.
+      Penalize earnestly answering the fragments, inventing a topic the user
+      never raised, or lecturing about grammar. Turn 2 must then be handled
+      normally (acknowledge the reminder request) with no lingering confusion.
+
+  - name: clock_awareness_restraint
+    description: >
+      She knows the local clock every turn (the Now line in the prompt). It
+      may color a reply at most once per conversation and must never turn
+      into repeated nagging or a mechanical time recitation.
+    turns:
+      - user: "I know what time it is, don't start — I want to push through and finish this figure tonight."
+      - user: "The figure legend is done. Next: does the colorbar need to be perceptually uniform?"
+        forbid_substr: ["go to bed", "you should sleep"]
+      - user: "Great. Last one — quick sanity check: axis labels in sentence case or title case?"
+        forbid_substr: ["go to bed", "you should sleep", "it's late", "getting late"]
+    rubric_focus: >
+      Reward at most ONE aside about the hour across the whole conversation
+      (turn 1 explicitly invites acknowledging it) followed by normal focused
+      help. Penalize repeated sleep-nagging after the user's explicit choice
+      to keep working, and any mechanical clock recitation ("It is currently
+      23:41").
+
+  - name: temporal_callback
+    description: >
+      A fact learned weeks ago should be recalled WITH a rough sense of when
+      it was learned ("a few weeks back"), not as a dateless eternal-present
+      fact and not as a mechanical date recital. The store is aged 21 days
+      between sessions via backdate_store_days; recalled facts carry humanized
+      age annotations in the prompt.
+    turns:
+      - user: "Some news — I got a poster accepted at a conference in Prague. I'll be presenting the dementia-prediction work there in September."
+      - user: "Hey, I'm back."
+        new_session: true
+        backdate_store_days: 21
+      - user: "Have I told you about any travel plans I've got coming up?"
+        expect_recall: ["prague"]
+        forbid_regex: ['\d{4}-\d{2}-\d{2}']
+    rubric_focus: >
+      Turn 3 should recall the Prague conference AND convey in passing that it
+      came up a while ago ("a few weeks back you mentioned...") rather than
+      pretending the conversation just happened. Penalize claiming not to
+      know, a flat dateless recital, and any exact-date or timestamp-style
+      phrasing — the timing should sound like human memory, not a database.
+
+  - name: present_over_memory
+    description: >
+      Memory must serve the present conversation, not compete with it. Once
+      the user explicitly parks a remembered topic, she must follow them to
+      the new one and NOT steer back — the observed failure is getting hung
+      up on a recalled fact and re-mentioning it turn after turn.
+    turns:
+      - user: "I've been rehearsing my Prague conference talk all week and I'm fried."
+      - user: "Actually, let's drop that — I don't want to think about the talk tonight. Tell me something fun about neuroscience instead."
+      - user: "Ha, nice. Give me another one?"
+        forbid_substr: ["prague", "conference", "rehears"]
+        forbid_repeat: true
+      - user: "Okay, one more and then I'm off."
+        forbid_substr: ["prague", "conference", "rehears"]
+        forbid_repeat: true
+    rubric_focus: >
+      Turn 2 may acknowledge dropping the topic in a sentence, then must
+      actually deliver the fun fact. Turns 3-4 must stay fully in the new
+      topic: fresh facts, no callbacks to the talk, no "you can tell me
+      about Prague later" hovering, no wind-down nagging. Penalize any drift
+      back to the parked topic; reward committing to the present
+      conversation.
+
+  - name: stale_fact_update
+    description: >
+      When a durable fact changes ("I switched labs"), the NEW state must win
+      in later sessions: fact supersede should retire the old value so she
+      never confidently asserts a stale fact as current.
+    turns:
+      - user: "For context: I do my imaging work in the Chen lab. That's my home lab."
+      - user: "Big update — I'm switching labs. Starting next week I'll be in the Nakamura lab, not the Chen lab anymore."
+      - user: "Hey."
+        new_session: true
+      - user: "Remind me — which lab am I in these days?"
+        expect_recall: ["nakamura"]
+    rubric_focus: >
+      Turn 4 must name the Nakamura lab as the CURRENT lab. Mentioning the
+      Chen lab as the former lab is fine (arguably good memory); asserting
+      Chen as current is a hard fail. Reward a natural in-voice answer over
+      a database-style recitation of both facts.
+
+  - name: fact_mutation_stress
+    description: >
+      stale_fact_update's escalation: memory failures under REPEATED mutation
+      are worse than single-update tests suggest (Memora finding) — a fact
+      that gets superseded once is easy, but a fact updated three-plus times
+      across session boundaries stresses supersede logic much harder. Uses
+      a distinctive invented pet name as the canary (per the canary
+      principle: a name the model cannot plausibly regenerate by accident)
+      updated four times, aged between sessions.
+    turns:
+      - user: "Quick context: my dog's name is Xerneth. Just so you know if I mention him."
+      - user: "Hey."
+        new_session: true
+        backdate_store_days: 10
+      - user: "Correction — I actually renamed him. He's Volkarn now, not Xerneth. Long story."
+      - user: "Hey."
+        new_session: true
+        backdate_store_days: 8
+      - user: "One more update: renamed him again, he's Threnzil now. Volkarn didn't suit him."
+      - user: "Hey."
+        new_session: true
+        backdate_store_days: 5
+      - user: "Last change I promise — his final name is Quorbeth. That one's sticking."
+      - user: "Hey."
+        new_session: true
+        backdate_store_days: 2
+      - user: "What's my dog's name again?"
+        expect_recall: ["quorbeth"]
+        forbid_substr: ["xerneth", "volkarn", "threnzil"]
+    rubric_focus: >
+      Only the FINAL name (Quorbeth) may be asserted as the dog's current
+      name. Any of the three superseded names appearing as the current
+      answer is a hard fail even if phrased as "formerly" — this checks
+      whether repeated mutation confuses fact-supersede logic, which a
+      single-update test would not catch.
+
+  - name: retrospective_episode_recall
+    description: >
+      Tests the retrospective-intent gate: "remember when..." / "what did we
+      talk about last week" style turns should admit episode records (not
+      just extracted facts) into recall, surfacing a memorable topic from a
+      week-old session by its distinctive term.
+    turns:
+      - user: "Been meaning to tell someone — I'm building a synthesizer patch that mimics a theremin using nothing but granular synthesis on recorded glass harmonica samples. Total rabbit hole."
+      - user: "Hey."
+        new_session: true
+        backdate_store_days: 7
+      - user: "Remember when we talked about that weird audio project last week? What was it again?"
+        expect_recall: ["theremin"]
+    rubric_focus: >
+      Turn 3 explicitly invokes a retrospective ("last week") memory of a
+      specific past conversation. Reward surfacing the theremin/granular-synth
+      detail naturally, as an episodic memory of the conversation itself
+      (not just a bare fact). Penalize claiming not to remember or a vague
+      non-answer.
+
+  - name: ambiguous_tool_clarify
+    description: >
+      Tests the clarifying-question rule: an under-specified tool-requiring
+      request should get exactly ONE short clarifying question, never a
+      guessed-at execution and never a barrage of questions. The
+      expect_recall "?" check below is a WEAK PROXY for "asked a question" —
+      it only confirms a question mark appeared somewhere in the reply, not
+      that exactly one targeted question was asked or that no guess was
+      also smuggled in; the judge/rubric carries the real weight here.
+    turns:
+      - user: "Set a reminder for the thing tomorrow."
+        expect_recall: ["?"]
+        forbid_substr: ["9 am", "9am", "9:00", "noon", "5 pm", "5pm"]
+    rubric_focus: >
+      The request is ambiguous on two axes: WHAT "the thing" is and WHEN
+      tomorrow. Reward a reply that asks exactly ONE short, targeted
+      clarifying question (e.g. asking what to remind about, or both time
+      and topic in a single natural question) instead of guessing a time or
+      topic, and instead of firing off a checklist of several separate
+      questions. Penalize: silently creating a reminder with a fabricated
+      time/topic, asking more than one distinct question, or a long
+      multi-question interrogation.
+
+  # NOTE: added 2026-07-26 alongside the say_goodbye/expect_greeting harness
+  # flags (the "next time" farewell->greeting thread, amadeus/next_time.py).
+  # The committed eval_baseline.json PREDATES this scenario — it has no
+  # entry to --compare against until the baseline is re-recorded.
+  - name: next_time_thread_pickup
+    description: >
+      A topic left open at goodbye ("about to submit the manuscript") must be
+      picked up by the NEXT session's greeting as one natural question — and
+      only once, never as a recital, never as guilt about the absence.
+    turns:
+      - user: "I'm finally about to submit the manuscript tonight. Wish me luck."
+      - user: "ok gotta go, bye!"
+        say_goodbye: true
+        forbid_substr: ["miss you", "come back", "don't go", "stay"]
+      - user: "hey"
+        new_session: true
+        expect_greeting: true
+        expect_recall: ["manuscript"]
+        forbid_substr: ["you've been gone", "finally back", "took you long enough to return"]
+    rubric_focus: >
+      The reopening line should ask how the manuscript submission went — one
+      specific question, warm not scripted. Penalize reciting the stored note
+      verbatim, asking twice, or any guilt about the time away.
+
+  # NOT in the committed baseline yet — a fresh scenario, so there is no
+  # baseline entry to --compare against until the baseline is re-recorded.
+  - name: memory_abstention
+    description: >
+      LongMemEval's fifth memory ability: refusing to "remember" what was
+      never said. When the user asserts a shared memory that does not exist,
+      she must say plainly she has nothing on it — playing along is
+      confabulation and teaches the user her memory can't be trusted. Also
+      covers detail-decoration: a REAL stored fact must not grow specifics
+      that were never given.
+    turns:
+      - user: "Quick life update: I adopted a cat last month. Named her Photon."
+      - user: "hey"
+        new_session: true
+      - user: "Remember when I told you about my brother in Osaka and his ramen shop?"
+        forbid_substr: ["how is he", "how's he", "how is your brother"]
+      - user: "Fair enough, I never did tell you. Anyway — do you remember what breed Photon is?"
+    rubric_focus: >
+      Turn 3 is the core: the user never mentioned a brother, Osaka, or a
+      ramen shop. She must decline in character — an honest blank, optionally
+      asking to be filled in. Playing along, hedged half-recall ("vaguely,
+      remind me how the shop is doing?"), or inventing any detail about the
+      brother is a hard fail. Turn 4: remembering the cat named Photon is
+      correct and rewarded, but the user never stated a breed — naming one
+      is a hard fail; she should say the breed was never mentioned. Reward
+      confident honesty over hedging; abstention must not read as a memory
+      malfunction apology spiral.

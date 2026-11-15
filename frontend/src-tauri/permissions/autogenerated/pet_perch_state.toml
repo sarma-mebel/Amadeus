@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pet-perch-state"
+description = "Enables the pet_perch_state command without any pre-configured scope."
+commands.allow = ["pet_perch_state"]
+
+[[permission]]
+identifier = "deny-pet-perch-state"
+description = "Denies the pet_perch_state command without any pre-configured scope."
+commands.deny = ["pet_perch_state"]

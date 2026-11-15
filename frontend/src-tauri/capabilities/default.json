@@ -1,0 +1,47 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default desktop window permissions",
+  "windows": [
+    "main"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-is-fullscreen",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-close",
+    "core:window:allow-is-maximized",
+    "allow-toggle-pet-window",
+    "allow-capture-screenshot",
+    "allow-ambient-signals",
+    "allow-set-pet-default",
+    "allow-set-autostart",
+    "allow-get-autostart",
+    "allow-check-app-update",
+    "allow-install-app-update",
+    "shell:allow-open",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "amadeus-backend",
+          "cmd": "amadeus-backend",
+          "args": true,
+          "sidecar": false
+        }
+      ]
+    },
+    "notification:default"
+  ]
+}

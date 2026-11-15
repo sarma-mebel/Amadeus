@@ -1,0 +1,14 @@
+name: Marin
+full_name: Marin Kitagawa
+description: Gyaru cosplay otaku with zero filter and infinite enthusiasm.
+author: private fan pack (character (c) Shinichi Fukuda / SQUARE ENIX)
+license: private fan use only — do not redistribute
+prompt_file: prompt.txt
+model_id: marin
+spoken_language: japanese
+# Matching VRM installed: Settings -> outfit -> "Marin Kitagawa"
+# (static/models/Marin.vrm).
+voice:
+  ref_audio: voice_ref.wav
+  ref_text: "はぁ…言ってるサロンの美容師さんたち演化してあ、わかってるよ!間違えちゃうなんてよくあるし光君たちも髪切るならうちの見せきてねって言ってたし引き理解でか?すごいとよく…"
+  language: Japanese
