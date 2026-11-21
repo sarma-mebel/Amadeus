@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import dataclasses
 import datetime as dt
 import functools
@@ -23,6 +24,7 @@ from ..memory.manager import EmbeddingProvider, MemoryManager, Message
 from ..memory.profile import familiarity_guardedness
 from ..persona import apply_style_modifiers
 from ..providers.llm.base import DummyProvider
+from ..providers.llm.openai_provider import OpenAIProvider
 from ..providers.stt.base import STTProvider
 from . import streaming
 from .blocking import run_blocking as _run_blocking
@@ -668,9 +670,16 @@ class WebChatSession(ChatEngine):
         self.memory._persist()
         return {"status": "ok"}
 
-    async def handle(self, request: ChatRequest) -> ChatResponse:
+    async def handle(self, request: ChatRequest, *, openai_model: Optional[str] = None) -> ChatResponse:
         async with self.handle_lock:
             self._apply_pending_rebind()
+            if openai_model:
+                configured = getattr(self.llm, "primary", self.llm)
+                if not isinstance(configured, OpenAIProvider):
+                    raise ProviderCallError("This model requires a configured OpenAI provider.")
+                provider = copy.copy(configured)
+                provider.model = openai_model
+                return await self._handle(request, turn_llm=provider)
             return await self._handle(request)
 
     async def handle_stream(
@@ -775,7 +784,8 @@ class WebChatSession(ChatEngine):
             )
         return setup
 
-    async def _handle(self, request: ChatRequest) -> ChatResponse:
+    async def _handle(self, request: ChatRequest, *, turn_llm: Optional[LLMProvider] = None) -> ChatResponse:
+        provider = self.llm if turn_llm is None else turn_llm
         turn_started = time.monotonic()
         # Off the event loop: recall runs an embedding + vector scan (same
         # reason the streaming path wraps _prepare_turn in _run_blocking).
@@ -803,14 +813,15 @@ class WebChatSession(ChatEngine):
                 ):
                     # Tool-augmented turn: run the (multi-step, blocking) ReAct loop
                     # off the event loop; it returns the final text like generate().
-                    reply = await _run_blocking(self._run_tool_loop, context)
+                    tool_loop = self._run_tool_loop if turn_llm is None else functools.partial(self._run_tool_loop, llm=provider)
+                    reply = await _run_blocking(tool_loop, context)
                     if use_tagged_output and reply and not parse_complete_reply(reply):
                         # Native function-calling rounds tend to drop the tagged
                         # grammar (markdown lists, no Japanese) — one repair pass
                         # restores emotion + speech text.
                         reply = await _run_blocking(
                             streaming.ensure_tagged_reply,
-                            self.llm,
+                            provider,
                             setup.system_prompt,
                             reply,
                         )
@@ -820,7 +831,7 @@ class WebChatSession(ChatEngine):
                     # the chat reply gets it (summaries/JSON must not).
                     reply = await _run_blocking(
                         functools.partial(
-                            self.llm.generate,
+                            provider.generate,
                             frequency_penalty=self.config.llm_frequency_penalty,
                         ),
                         context,
@@ -828,8 +839,8 @@ class WebChatSession(ChatEngine):
                     # Only the plain-generate branch records here — tool
                     # turns record their own calls (tokens.tools.*) inside
                     # the loop, and the repair pass records tokens.repair.*.
-                    telemetry.record_llm_usage(self.llm, "chat")
-                    provider_health.record_llm_success(self.llm)
+                    telemetry.record_llm_usage(provider, "chat")
+                    provider_health.record_llm_success(provider)
             except Exception as exc:
                 LOGGER.exception("Provider call failed for this turn")
                 telemetry.incr("web.provider_failures")
