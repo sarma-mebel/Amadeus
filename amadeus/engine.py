@@ -887,7 +887,7 @@ class ChatEngine:
         if callable(pop):
             self._pending_animations = pop()
 
-    def _run_tool_loop(self, context: List[ChatMessage], progress_callback=None) -> str:
+    def _run_tool_loop(self, context: List[ChatMessage], progress_callback=None, *, llm=None) -> str:
         """Run the non-council ReAct tool loop, augmenting the system prompt
         (context[0]) with the available-tools instructions. Blocking (may make
         several sequential model calls); callers off the event loop should wrap
@@ -900,12 +900,13 @@ class ChatEngine:
             run_native_tool_loop,
         )
 
+        provider = self.llm if llm is None else llm
         # Mark the conversation tool-oriented so short follow-ups stay grounded.
         self._tools_used_this_session = True
         self._pending_animations = []
         # Prefer native function calling when the provider supports it (no
         # JSON-in-text to malform). Falls back to text ReAct otherwise.
-        native = getattr(self.llm, "supports_tools", lambda: False)()
+        native = getattr(provider, "supports_tools", lambda: False)()
         tool_prompt = build_tool_system_prompt(
             self.tool_registry, allowed=self.config.tools.allowed, native=native
         )
@@ -920,7 +921,7 @@ class ChatEngine:
         try:
             if native:
                 reply = run_native_tool_loop(
-                    self.llm,
+                    provider,
                     self.tool_registry,
                     augmented,
                     max_iters=self.config.tools.max_iterations,
@@ -933,7 +934,7 @@ class ChatEngine:
                 )
             else:
                 reply = run_tool_loop(
-                    self.llm.generate,
+                    provider.generate,
                     self.tool_registry,
                     augmented,
                     max_iters=self.config.tools.max_iterations,
@@ -980,7 +981,7 @@ class ChatEngine:
                 return self._canned_failure_reply("rate_limited")
             LOGGER.error("Tool loop failed, falling back to plain generate(): %s", exc)
             self._drain_animation_requests()
-            reply = self._generate_with_health(context)
+            reply = self._generate_with_health(context, llm=provider)
             return reply
         self._drain_animation_requests()
         if not (reply or "").strip():
@@ -995,7 +996,7 @@ class ChatEngine:
                 "Tool loop returned an empty reply; retrying once without tools"
             )
             try:
-                reply = self._generate_with_health(context)
+                reply = self._generate_with_health(context, llm=provider)
             except Exception as exc:  # pragma: no cover - provider errors
                 if provider_health.classify_and_record(exc) == "rate_limited":
                     return self._canned_failure_reply("rate_limited")
@@ -1005,20 +1006,21 @@ class ChatEngine:
             # Genuinely nothing to say: a confused loop (cap, refusals) gets
             # an in-character recovery line instead of an empty bubble.
             return self._canned_failure_reply("lost")
-        provider_health.record_llm_success(self.llm)
+        provider_health.record_llm_success(provider)
         return reply
 
     def _canned_failure_reply(self, kind: str) -> str:
         return canned_failure_reply(kind, is_custom_character=self._character_is_custom)
 
-    def _generate_with_health(self, context: List[ChatMessage]) -> str:
+    def _generate_with_health(self, context: List[ChatMessage], *, llm=None) -> str:
         """Plain ``llm.generate`` + usage telemetry + health self-heal, the
         shared tail every non-streaming fallback/retry path in this class
         wants. A successful call clears any prior rate_limited/error/
         invalid_key state — the self-healing half of provider health."""
-        reply = self.llm.generate(context)
-        telemetry.record_llm_usage(self.llm, "chat")
-        provider_health.record_llm_success(self.llm)
+        provider = self.llm if llm is None else llm
+        reply = provider.generate(context)
+        telemetry.record_llm_usage(provider, "chat")
+        provider_health.record_llm_success(provider)
         return reply
 
     def rollback_user_message(self, user_text: str) -> None:
