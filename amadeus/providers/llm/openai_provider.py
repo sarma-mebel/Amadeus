@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Iterable
 
 from .base import ChatMessage, LLMProvider
@@ -27,12 +28,18 @@ class OpenAIProvider(LLMProvider):
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
 
-    @staticmethod
-    def _request_kwargs(kwargs: dict) -> dict:
-        request: dict = {"temperature": kwargs.get("temperature", 0.8)}
+    ASTRA_MODEL = "gpt-6.2-astra"
+
+    def _request_kwargs(self, kwargs: dict) -> dict:
+        reasoning = re.match(r"^(?:gpt-(?:[5-9]|[1-9][0-9]+)(?:[.-]|$)|o[1-9](?:-|$))", self.model) is not None
+        request = {} if reasoning else {"temperature": kwargs.get("temperature", 0.8)}
         max_tokens = kwargs.get("max_tokens")
         if max_tokens:
-            request["max_tokens"] = int(max_tokens)
+            request["max_completion_tokens" if reasoning else "max_tokens"] = int(max_tokens)
+        if self.model == self.ASTRA_MODEL:
+            request["reasoning_effort"] = "medium"
+            if max_tokens:
+                request["max_completion_tokens"] = max(2048, int(max_tokens))
         return request
 
     @staticmethod

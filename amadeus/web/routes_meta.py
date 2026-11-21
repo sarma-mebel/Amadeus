@@ -8,6 +8,7 @@ import base64
 import datetime as dt
 import importlib.util
 import io
+import re
 import time
 import wave
 from typing import Any, Dict, Optional
@@ -292,6 +293,26 @@ def build_router(store: SessionStore, config: Config) -> APIRouter:
     @router.get("/api/settings", response_model=settings_api.SettingsResponse)
     async def get_settings() -> settings_api.SettingsResponse:
         return settings_api.build_settings_response(store.config, llm=store.llm)
+
+    @router.get("/api/settings/openai-models")
+    def openai_models() -> Dict[str, Any]:
+        from openai import OpenAI
+
+        cfg = store.config
+        if not cfg.openai_api_key:
+            raise HTTPException(400, "OpenAI project key is not configured")
+        try:
+            with OpenAI(api_key=cfg.openai_api_key, base_url=cfg.providers.openai_base_url,
+                        timeout=12, max_retries=0) as client:
+                catalog = client.models.list().data
+        except Exception as exc:
+            raise HTTPException(502, "Could not load the model list") from exc
+        excluded = ("audio", "realtime", "search", "image", "transcribe", "tts", "embedd",
+                    "moderation", "codex", "deep-research", "computer-use", "-pro")
+        models = [m for m in catalog if re.match(r"^(gpt-[0-9]|o[1-9])", m.id)
+                  and not any(tag in m.id for tag in excluded)]
+        models.sort(key=lambda m: (m.created, m.id), reverse=True)
+        return {"models": [m.id for m in models]}
 
     @router.put("/api/settings", response_model=settings_api.SettingsUpdateResponse)
     async def update_settings(

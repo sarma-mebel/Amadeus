@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import re
 import threading
 from typing import Callable, Dict, Optional
 
@@ -69,9 +70,23 @@ def build_router(
 
     @router.post("/api/chat", response_model=ChatResponse)
     async def chat_endpoint(payload: ChatRequest) -> ChatResponse:
+        return await handle_chat(payload)
+
+    @router.post("/api/chat/mobile", response_model=ChatResponse)
+    async def mobile_chat(payload: ChatRequest, model: str = "gpt-6.2-astra") -> ChatResponse:
+        if not api_token or config.web.demo_mode:
+            raise HTTPException(403, "Model selection requires a private, token-protected server")
+        if not re.fullmatch(r"(?:gpt-[0-9]|o[1-9])[a-z0-9.-]{0,72}", model):
+            raise HTTPException(422, "Invalid OpenAI chat model ID")
+        return await handle_chat(payload, model)
+
+    async def handle_chat(payload: ChatRequest, model: Optional[str] = None) -> ChatResponse:
         session_id, session = store.get(payload.session_id, payload.user_id)
         try:
-            response = await session.handle(payload)
+            if model:
+                response = await session.handle(payload, openai_model=model)
+            else:
+                response = await session.handle(payload)
         except ProviderCallError as exc:
             # Rate limits, quota, and network blips shouldn't surface as a
             # bare 500 with a stack trace. 502: the upstream provider failed.
