@@ -87,3 +87,28 @@ def test_stream_without_usage_leaves_none():
     provider.last_usage = {"prompt": 1, "completion": 1}  # stale from a prior call
     "".join(provider.stream(_msgs()))
     assert provider.last_usage is None
+
+
+def test_new_gpt_models_use_supported_sampling_and_output_limit():
+    provider, calls = _provider(response=_response("да"))
+    for model in ("gpt-5.4-mini", "gpt-6.2-sol", "o3"):
+        provider.model = model
+        provider.generate(_msgs(), temperature=0.8, max_tokens=240)
+        assert calls.kwargs[-1]["max_completion_tokens"] == 240
+        assert "temperature" not in calls.kwargs[-1]
+        assert "max_tokens" not in calls.kwargs[-1]
+    provider.model = "gpt-4o-mini"
+    provider.generate(_msgs(), temperature=0.7, max_tokens=240)
+    assert calls.kwargs[-1]["max_tokens"] == 240
+    assert calls.kwargs[-1]["temperature"] == 0.7
+
+
+def test_mobile_astra_uses_medium_reasoning_without_sampling_parameters():
+    provider, completions = _provider(response=_response("Привет"))
+    provider.model = OpenAIProvider.ASTRA_MODEL
+    assert provider.generate(_msgs(), temperature=0.4, max_tokens=32) == "Привет"
+    sent = completions.kwargs[0]
+    assert sent["model"] == "gpt-6.2-astra"
+    assert sent["reasoning_effort"] == "medium"
+    assert sent["max_completion_tokens"] >= 32
+    assert "temperature" not in sent and "max_tokens" not in sent
